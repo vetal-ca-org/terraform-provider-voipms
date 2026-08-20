@@ -1,0 +1,29 @@
+---
+page_title: "VoIP.ms Provider"
+description: |-
+  Manage VoIP.ms account objects through the REST/JSON API.
+---
+
+# VoIP.ms Provider
+
+Use this provider to read and manage objects in a [VoIP.ms](https://voip.ms) account through the REST/JSON API.
+
+{{ .Description | trimspace }}
+
+{{ if .HasExample }}
+## Example Usage
+
+{{ tffile .ExampleFile }}
+{{ end }}
+
+## Authentication
+
+Set credentials in the provider block or with environment variables:
+
+- `VOIPMS_USERNAME` or `voip_ms_username` — account email (API username)
+- `VOIPMS_PASSWORD` or `voip_ms_api_key` — API password from **SOAP & REST/JSON API** (not the portal password)
+- `VOIPMS_API_URL` — optional endpoint override
+
+The public IP of the machine running Terraform must be allow-listed on that same portal page.
+
+{{ .SchemaMarkdown | trimspace }}

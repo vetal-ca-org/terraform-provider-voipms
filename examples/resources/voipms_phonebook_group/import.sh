@@ -1,0 +1,1 @@
+terraform import voipms_phonebook_group.spam 5001

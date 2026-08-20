@@ -1,0 +1,14 @@
+# Example Terraform CLI config for local provider development.
+#
+# Copy to ~/.terraformrc or point TF_CLI_CONFIG_FILE at a copy, then change the
+# path to `go env GOPATH`/bin on your machine.
+#
+#   export TF_CLI_CONFIG_FILE="$PWD/terraformrc.example"
+
+provider_installation {
+  dev_overrides {
+    "vetal-ca-org/voipms" = "/REPLACE_ME/go/bin"
+  }
+
+  direct {}
+}

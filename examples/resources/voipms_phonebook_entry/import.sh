@@ -1,0 +1,1 @@
+terraform import voipms_phonebook_entry.blocked_prefix 476494

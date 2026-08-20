@@ -1,0 +1,31 @@
+*.dll
+*.exe
+.DS_Store
+terraform.tfplan
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+bin/
+dist/
+terraform-provider-voipms
+terraform-provider-voipms.exe
+/pkg/
+*.log
+*.bak
+*~
+.*.swp
+.idea
+*.iml
+*.test
+*.out
+coverage.html
+coverage.out
+vendor/
+
+# Local override for developing against a built binary
+terraformrc.local
+.devrc
+
+# Live API dumps contain sub-account SIP passwords
+inventory/
