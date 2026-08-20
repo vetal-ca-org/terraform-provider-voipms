@@ -9,7 +9,6 @@ on:
       - "CHANGELOG.md"
   push:
     branches:
-      - main
       - master
       - "feature/**"
     paths-ignore:

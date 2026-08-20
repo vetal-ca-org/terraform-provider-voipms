@@ -2,7 +2,7 @@
 
 Terraform provider for [VoIP.ms](https://voip.ms). It talks to the public REST/JSON API so account objects (DIDs, subaccounts, routing, SMS, and so on) can be managed as Terraform configuration instead of clicks in the portal.
 
-This repository follows the HashiCorp naming convention (`terraform-provider-voipms`). `main` is the default branch. See `docs/provider-roadmap.md` for API coverage.
+This repository follows the HashiCorp naming convention (`terraform-provider-voipms`). `master` is the default branch. See `docs/provider-roadmap.md` for API coverage.
 
 Provider source address (local / future registry):
 
