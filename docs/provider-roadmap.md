@@ -29,9 +29,10 @@ IVRs, ring groups, queues, time conditions, DISA, SIP URIs, recordings, call hun
 | API method | Purpose |
 |------------|---------|
 | `getServersInfo` | POP id → hostname (e.g. pop `73` → `newyork7.voip.ms`) |
-| `getAuthTypes`, `getProtocols`, `getDeviceTypes` | Sub-account schema enums |
+| `getAuthTypes`, `getProtocols`, `getDeviceTypes` | Sub-account schema enums (`password`/`ip`, `sip`/`iax2`, `ip_pbx`/`ata`) |
 | `getAllowedCodecs`, `getDTMFModes`, `getNAT`, `getMusicOnHold`, `getLanguages` | Sub-account options |
-| `getRoutes` | Canada routing (`canada_routing`: `value`/`1`, `premium`/`2`) |
+| `getRoutes` | Canada / international routing (`value`/`1`, `premium`/`2`) |
+| `getLockInternational` | International calling (`allow`/`0`, `deny`/`1`) |
 | `getVoicemailSetups` | DID vs account voicemail mode |
 
 ## Example identifiers in docs

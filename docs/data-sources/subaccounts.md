@@ -37,14 +37,14 @@ Read-Only:
 - `account` (String) Full SIP login (`{main}_{username}`).
 - `allow_225_balance` (Boolean) Whether `*225` / `*BAL` balance check is allowed.
 - `allowed_codecs` (String) Allowed codecs.
-- `auth_type` (String) Authentication type.
-- `call_pickup_behavior` (String) Call pickup behavior.
+- `auth_type` (String) Authentication type (`password` or `ip`).
+- `call_pickup_behavior` (String) Call pickup permissions (`pickup_and_be_picked_up`, `pickup_only`, `be_picked_up_only`, or `disabled`).
 - `callerid_number` (String) Outbound caller ID number.
 - `canada_routing` (String) Canada routing (`value` or `premium`).
 - `default_e911` (String) Default E911 DID.
 - `description` (String) Portal description.
-- `device_type` (String) Device type id.
-- `dialing_mode` (String) Dialing mode.
+- `device_type` (String) Device type (`ip_pbx` or `ata`).
+- `dialing_mode` (String) Outbound dialing mode (`main_account`, `e164`, or `nanpa`).
 - `dtmf_mode` (String) DTMF mode.
 - `enable_internal_cnam` (Boolean) Whether internal CNAM is enabled.
 - `enable_ip_restriction` (Boolean) Whether IP restriction is enabled.
@@ -58,17 +58,17 @@ Read-Only:
 - `internal_dialtime` (String) Internal ring time.
 - `internal_extension` (String) Internal extension.
 - `internal_voicemail` (String) Internal voicemail mailbox. Set from a `voipms_voicemail` `id`.
-- `international_route` (String) International route id.
+- `international_route` (String) International route (`value` or `premium`).
 - `ip` (String) IP/FQDN used for IP authentication.
 - `ip_restriction` (String) IP restriction list.
 - `language` (String) Language code.
-- `lock_international` (String) International lock setting.
+- `lock_international` (String) International calling (`allow` or `deny`).
 - `max_expiry` (Number) Maximum registration expiry in seconds.
 - `music_on_hold` (String) Music on hold class.
 - `nat` (String) NAT setting.
 - `password` (String, Sensitive) SIP password.
 - `pop_restriction` (String) POP restriction list (unset when restriction is off).
-- `protocol` (String) Protocol id.
+- `protocol` (String) Protocol (`sip` or `iax2`).
 - `record_calls` (Boolean) Whether calls are recorded.
 - `route` (String) DID routing value (`account:{account}`). Use this for `voipms_did` `routing` / failover.
 - `rtp_hold_timeout` (Number) RTP hold timeout in seconds.

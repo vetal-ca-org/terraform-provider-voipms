@@ -39,7 +39,7 @@ Read-Only:
 - `mailbox` (String) Mailbox number.
 - `name` (String) Display name (e.g. `John`).
 - `password` (String, Sensitive) Mailbox PIN.
-- `play_instructions` (String) When to play instructions.
+- `play_instructions` (String) When to play mailbox instructions (`unread` or `skip_unread`).
 - `route` (String) DID routing value (`vm:{mailbox}`). Use this for `voipms_did` `routing` / failover.
 - `say_callerid` (Boolean) Announce caller ID.
 - `say_time` (Boolean) Announce message time.

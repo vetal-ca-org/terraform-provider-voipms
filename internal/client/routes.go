@@ -5,43 +5,6 @@ import (
 	"strings"
 )
 
-// Canada routing values from getRoutes: 1 = Value, 2 = Premium.
-const (
-	CanadaRouteValue   = "value"
-	CanadaRoutePremium = "premium"
-)
-
-// CanadaRouteName maps an API id or name to the canonical name (`value` / `premium`).
-func CanadaRouteName(v string) (string, bool) {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "1", CanadaRouteValue:
-		return CanadaRouteValue, true
-	case "2", CanadaRoutePremium:
-		return CanadaRoutePremium, true
-	default:
-		return "", false
-	}
-}
-
-// CanadaRouteID maps an API id or name to the API id (`1` / `2`).
-func CanadaRouteID(v string) (string, bool) {
-	name, ok := CanadaRouteName(v)
-	if !ok {
-		return "", false
-	}
-	if name == CanadaRoutePremium {
-		return "2", true
-	}
-	return "1", true
-}
-
-// CanadaRoutesEqual is true when a and b are the same Canada route (name or id).
-func CanadaRoutesEqual(a, b string) bool {
-	ia, oka := CanadaRouteID(a)
-	ib, okb := CanadaRouteID(b)
-	return oka && okb && ia == ib
-}
-
 // VoIP.ms DID routing prefixes. The target after the colon is the API id
 // (mailbox, forwarding id) or the SIP login for account: routes.
 const (

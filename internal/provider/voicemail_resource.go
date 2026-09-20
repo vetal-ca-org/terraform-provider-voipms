@@ -74,7 +74,7 @@ func (r *voicemailResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"say_time":                      optBoolAttr("Announce the message time."),
 			"timezone":                      optStr("Timezone (e.g. `America/Montreal`)."),
 			"say_callerid":                  optBoolAttr("Announce the caller ID."),
-			"play_instructions":             optStr("When to play instructions (`u` = unavailable greeting, etc.)."),
+			"play_instructions":             optStr("When to play mailbox instructions. Use `unread` (API `u`) or `skip_unread` (API `su`). Short codes still work."),
 			"language":                      optStr("Prompt language (e.g. `en`)."),
 			"email_attachment_format":       optStr("Attachment format (e.g. `wav49`)."),
 			"unavailable_message_recording": optStr("Unavailable greeting recording id."),
@@ -180,7 +180,7 @@ func voicemailWriteParams(m voicemailModel) map[string]string {
 	setBoolYesNo(params, "say_time", m.SayTime)
 	setString(params, "timezone", m.Timezone)
 	setBoolYesNo(params, "say_callerid", m.SayCallerID)
-	setString(params, "play_instructions", m.PlayInstructions)
+	setNamed(params, "play_instructions", m.PlayInstructions, client.PlayInstructions)
 	setString(params, "language", m.Language)
 	setString(params, "email_attachment_format", m.EmailAttachmentFormat)
 	setString(params, "unavailable_message_recording", m.UnavailableMessageRecording)
@@ -200,6 +200,14 @@ func (r *voicemailResource) ModifyPlan(ctx context.Context, req resource.ModifyP
 		plan.ID = types.StringValue(plan.Mailbox.ValueString())
 		plan.Route = types.StringValue(client.VoicemailRoute(plan.Mailbox.ValueString()))
 	}
+	if !req.State.Raw.IsNull() {
+		var state voicemailModel
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		keepNamed(&plan.PlayInstructions, state.PlayInstructions, client.PlayInstructions)
+	}
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
@@ -216,7 +224,7 @@ func flattenVoicemail(src *client.Voicemail, dst *voicemailModel) {
 	dst.SayTime = boolVal(src.SayTime)
 	dst.Timezone = strVal(src.Timezone)
 	dst.SayCallerID = boolVal(src.SayCallerID)
-	dst.PlayInstructions = strVal(src.PlayInstructions)
+	dst.PlayInstructions = namedVal(src.PlayInstructions, client.PlayInstructions)
 	dst.Language = strVal(src.Language)
 	dst.EmailAttachmentFormat = strVal(src.EmailAttachmentFormat)
 	dst.UnavailableMessageRecording = strVal(src.UnavailableMessageRecording)

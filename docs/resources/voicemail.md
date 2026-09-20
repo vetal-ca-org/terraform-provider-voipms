@@ -42,7 +42,7 @@ resource "voipms_voicemail" "main" {
 - `email` (String) Notification email; comma-separated for multiple addresses.
 - `email_attachment_format` (String) Attachment format (e.g. `wav49`).
 - `language` (String) Prompt language (e.g. `en`).
-- `play_instructions` (String) When to play instructions (`u` = unavailable greeting, etc.).
+- `play_instructions` (String) When to play mailbox instructions. Use `unread` (API `u`) or `skip_unread` (API `su`). Short codes still work.
 - `say_callerid` (Boolean) Announce the caller ID.
 - `say_time` (Boolean) Announce the message time.
 - `skip_password` (Boolean) Skip the PIN prompt when checking voicemail from a trusted DID.

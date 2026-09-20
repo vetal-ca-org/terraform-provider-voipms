@@ -34,7 +34,7 @@ output "did_routing" {
 
 Read-Only:
 
-- `billing_type` (String) Billing type.
+- `billing_type` (String) DID billing (`per_minute` or `flat`).
 - `callerid_prefix` (String) Caller ID prefix.
 - `cnam` (Boolean) CNAM lookup enabled.
 - `description` (String) Rate-center / city description.

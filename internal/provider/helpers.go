@@ -53,6 +53,34 @@ func setString(params map[string]string, key string, v types.String) {
 	params[key] = v.ValueString()
 }
 
+func setNamed(params map[string]string, key string, v types.String, code client.NamedCode) {
+	if v.IsNull() || v.IsUnknown() {
+		return
+	}
+	s := v.ValueString()
+	if id, ok := code.ID(s); ok {
+		params[key] = id
+		return
+	}
+	params[key] = s
+}
+
+func namedVal(v client.FlexString, code client.NamedCode) types.String {
+	if name, ok := code.Name(v.String()); ok {
+		return types.StringValue(name)
+	}
+	return strVal(v)
+}
+
+func keepNamed(plan *types.String, state types.String, code client.NamedCode) {
+	if plan.IsNull() || plan.IsUnknown() || state.IsNull() || state.IsUnknown() {
+		return
+	}
+	if code.Equal(plan.ValueString(), state.ValueString()) {
+		*plan = state
+	}
+}
+
 func setBool01(params map[string]string, key string, v types.Bool) {
 	if v.IsNull() || v.IsUnknown() {
 		return

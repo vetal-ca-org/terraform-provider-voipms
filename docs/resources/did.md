@@ -56,7 +56,7 @@ resource "voipms_did" "home" {
 
 ### Optional
 
-- `billing_type` (String) `1` = per minute, `2` = flat rate.
+- `billing_type` (String) DID billing. Use `per_minute` (API `1`) or `flat` (API `2`). Numeric ids still work.
 - `callerid_prefix` (String) Caller ID prefix.
 - `cnam` (Boolean) Enable CNAM lookup on inbound calls.
 - `dialtime` (Number) Ring time in seconds before failover/voicemail.

@@ -118,7 +118,7 @@ func didResourceAttributes() map[string]schema.Attribute {
 		"callerid_prefix":          optStr("Caller ID prefix."),
 		"record_calls":             optBoolAttr("Record inbound calls."),
 		"note":                     optStr("Free-form DID note (e.g. `Home line`)."),
-		"billing_type":             optStr("`1` = per minute, `2` = flat rate."),
+		"billing_type":             optStr("DID billing. Use `per_minute` (API `1`) or `flat` (API `2`). Numeric ids still work."),
 		"next_billing":             schema.StringAttribute{MarkdownDescription: "Next billing date.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 		"order_date":               schema.StringAttribute{MarkdownDescription: "Date the DID was ordered.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 		"voicemail_threshold":      optIntAttr("Voicemail threshold."),
@@ -394,6 +394,7 @@ func (r *didResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReq
 	keepEquivalentRoute(&plan.FailoverBusy, state.FailoverBusy, tables)
 	keepEquivalentRoute(&plan.FailoverUnreachable, state.FailoverUnreachable, tables)
 	keepEquivalentRoute(&plan.FailoverNoanswer, state.FailoverNoanswer, tables)
+	keepNamed(&plan.BillingType, state.BillingType, client.BillingType)
 	// Keep computed-only attributes from state so Set() does not mark them unknown.
 	plan.Description = state.Description
 	plan.E911 = state.E911
@@ -498,7 +499,7 @@ func didInfoParams(m didModel) map[string]string {
 	setBool01(params, "cnam", m.CNAM)
 	setString(params, "callerid_prefix", m.CallerIDPrefix)
 	setString(params, "note", m.Note)
-	setString(params, "billing_type", m.BillingType)
+	setNamed(params, "billing_type", m.BillingType, client.BillingType)
 	setBool01(params, "record_calls", m.RecordCalls)
 	setInt(params, "voicemail_threshold", m.VoicemailThreshold)
 	return params
@@ -537,7 +538,7 @@ func flattenDID(src *client.DID, dst *didModel) {
 	dst.CallerIDPrefix = strVal(src.CallerIDPrefix)
 	dst.RecordCalls = boolVal(src.RecordCalls)
 	dst.Note = strVal(src.Note)
-	dst.BillingType = strVal(src.BillingType)
+	dst.BillingType = namedVal(src.BillingType, client.BillingType)
 	dst.NextBilling = strVal(src.NextBilling)
 	dst.OrderDate = strVal(src.OrderDate)
 	dst.VoicemailThreshold = intVal(src.VoicemailThreshold)

@@ -6,7 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
 func testClient(t *testing.T, handler http.HandlerFunc) *Client {
@@ -91,12 +93,70 @@ func TestCallHTTPError(t *testing.T) {
 	t.Parallel()
 
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "nope", http.StatusBadGateway)
+		http.Error(w, "nope", http.StatusForbidden)
 	})
 
 	err := c.Call(context.Background(), "getBalance", nil, nil)
 	if err == nil {
 		t.Fatal("expected HTTP error, got nil")
+	}
+	var httpErr *HTTPError
+	if !errors.As(err, &httpErr) {
+		t.Fatalf("error type = %T, want *HTTPError", err)
+	}
+	if httpErr.Status != http.StatusForbidden {
+		t.Errorf("Status = %d, want %d", httpErr.Status, http.StatusForbidden)
+	}
+	if httpErr.Retryable() {
+		t.Error("403 should not be retryable")
+	}
+}
+
+func TestCallRetriesCloudflare522(t *testing.T) {
+	t.Parallel()
+
+	var hits int
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		if hits < 3 {
+			w.WriteHeader(statusCloudflareTimeout)
+			_, _ = w.Write([]byte("error code: 522"))
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	})
+	c.retryBackoff = func(context.Context, time.Duration) error { return nil }
+
+	if err := c.Call(context.Background(), "getBalance", nil, nil); err != nil {
+		t.Fatalf("Call() after retries: %v", err)
+	}
+	if hits != 3 {
+		t.Errorf("hits = %d, want 3", hits)
+	}
+}
+
+func TestCallGivesUpOnPersistent522(t *testing.T) {
+	t.Parallel()
+
+	var hits int
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.WriteHeader(statusCloudflareTimeout)
+		_, _ = w.Write([]byte("error code: 522"))
+	})
+	c.maxAttempts = 4
+	c.retryBackoff = func(context.Context, time.Duration) error { return nil }
+
+	err := c.Call(context.Background(), "getServersInfo", nil, nil)
+	if err == nil {
+		t.Fatal("expected HTTP error after retries")
+	}
+	var httpErr *HTTPError
+	if !errors.As(err, &httpErr) || httpErr.Status != statusCloudflareTimeout {
+		t.Fatalf("err = %v, want HTTP 522", err)
+	}
+	if hits != 4 {
+		t.Errorf("hits = %d, want 4", hits)
 	}
 }
 
@@ -597,6 +657,49 @@ func TestCanadaRoute(t *testing.T) {
 	}
 	if CanadaRoutesEqual("1", "2") {
 		t.Error("value should not equal premium")
+	}
+}
+
+func TestNamedCodes(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		code NamedCode
+		id   string
+		name string
+	}{
+		{DeviceType, "1", DeviceTypeIPPBX},
+		{DeviceType, "2", DeviceTypeATA},
+		{AuthType, "1", AuthTypePassword},
+		{AuthType, "2", AuthTypeIP},
+		{Protocol, "1", ProtocolSIP},
+		{Protocol, "3", ProtocolIAX2},
+		{LockInternational, "0", LockInternationalAllow},
+		{LockInternational, "1", LockInternationalDeny},
+		{DialingMode, "0", DialingModeMainAccount},
+		{DialingMode, "1", DialingModeE164},
+		{DialingMode, "2", DialingModeNANPA},
+		{CallPickupBehavior, "1", CallPickupBoth},
+		{CallPickupBehavior, "4", CallPickupDisabled},
+		{BillingType, "1", BillingTypePerMinute},
+		{BillingType, "2", BillingTypeFlat},
+		{PlayInstructions, "u", PlayInstructionsUnread},
+		{PlayInstructions, "su", PlayInstructionsSkipUnread},
+	}
+	for _, tc := range cases {
+		name, ok := tc.code.Name(tc.id)
+		if !ok || name != tc.name {
+			t.Errorf("Name(%q) = %q %v, want %q", tc.id, name, ok, tc.name)
+		}
+		id, ok := tc.code.ID(tc.name)
+		if !ok || id != tc.id {
+			t.Errorf("ID(%q) = %q %v, want %q", tc.name, id, ok, tc.id)
+		}
+		if !tc.code.Equal(tc.id, strings.ToUpper(tc.name)) {
+			t.Errorf("%q should equal %q", tc.id, tc.name)
+		}
+	}
+	if _, ok := DeviceType.Name("9"); ok {
+		t.Error("unknown device type should not map")
 	}
 }
 

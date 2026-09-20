@@ -40,7 +40,7 @@ func didDataSourceAttributes(lookup bool) map[string]schema.Attribute {
 		"callerid_prefix":          dsString("Caller ID prefix."),
 		"record_calls":             dsBool("Inbound call recording."),
 		"note":                     dsString("DID note."),
-		"billing_type":             dsString("Billing type."),
+		"billing_type":             dsString("DID billing (`per_minute` or `flat`)."),
 		"next_billing":             dsString("Next billing date."),
 		"order_date":               dsString("Order date."),
 		"voicemail_threshold":      dsInt("Voicemail threshold."),

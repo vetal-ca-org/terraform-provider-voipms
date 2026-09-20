@@ -23,16 +23,28 @@ var ErrNotFound = errors.New("voip.ms object not found")
 // DefaultBaseURL is the VoIP.ms REST endpoint that returns JSON directly.
 const DefaultBaseURL = "https://voip.ms/api/v1/rest.php"
 
-const defaultTimeout = 30 * time.Second
+const (
+	defaultTimeout     = 30 * time.Second
+	defaultMaxAttempts = 5
+)
+
+// Cloudflare / edge timeouts while voip.ms origin is slow or unreachable.
+const (
+	statusCloudflareTimeout           = 522
+	statusCloudflareOriginUnreachable = 523
+	statusCloudflareEdgeTimeout       = 524
+)
 
 // Client talks to the VoIP.ms REST API.
 type Client struct {
-	baseURL    string
-	username   string
-	password   string
-	httpClient *http.Client
-	userAgent  string
-	cache      listCache
+	baseURL      string
+	username     string
+	password     string
+	httpClient   *http.Client
+	userAgent    string
+	cache        listCache
+	maxAttempts  int
+	retryBackoff func(ctx context.Context, d time.Duration) error
 }
 
 // Config is used to construct a Client.
@@ -62,12 +74,75 @@ func New(cfg Config) *Client {
 	}
 
 	return &Client{
-		baseURL:    baseURL,
-		username:   cfg.Username,
-		password:   cfg.Password,
-		httpClient: httpClient,
-		userAgent:  userAgent,
+		baseURL:      baseURL,
+		username:     cfg.Username,
+		password:     cfg.Password,
+		httpClient:   httpClient,
+		userAgent:    userAgent,
+		maxAttempts:  defaultMaxAttempts,
+		retryBackoff: sleepContext,
 	}
+}
+
+func sleepContext(ctx context.Context, d time.Duration) error {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
+	}
+}
+
+func retryDelay(attempt int) time.Duration {
+	d := time.Second << (attempt - 1)
+	if d > 8*time.Second {
+		return 8 * time.Second
+	}
+	return d
+}
+
+func retryableStatus(code int) bool {
+	switch code {
+	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout,
+		statusCloudflareTimeout, statusCloudflareOriginUnreachable, statusCloudflareEdgeTimeout:
+		return true
+	default:
+		return false
+	}
+}
+
+// HTTPError is a non-2xx response from the VoIP.ms endpoint (or Cloudflare in front of it).
+type HTTPError struct {
+	Method string
+	Status int
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("call %s: unexpected HTTP %d", e.Method, e.Status)
+}
+
+func (e *HTTPError) Retryable() bool {
+	return retryableStatus(e.Status)
+}
+
+func retryableCallError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	var httpErr *HTTPError
+	if errors.As(err, &httpErr) {
+		return httpErr.Retryable()
+	}
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		return false
+	}
+	return true
 }
 
 // APIError is returned when VoIP.ms responds with a non-success status.
@@ -124,7 +199,29 @@ func (c *Client) call(ctx context.Context, method string, params map[string]stri
 	}
 	u.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	attempts := c.maxAttempts
+	if attempts < 1 {
+		attempts = 1
+	}
+
+	var last error
+	for attempt := 1; attempt <= attempts; attempt++ {
+		last = c.doOnce(ctx, method, u.String(), dest)
+		if last == nil {
+			return nil
+		}
+		if attempt == attempts || !retryableCallError(last) {
+			return last
+		}
+		if err := c.retryBackoff(ctx, retryDelay(attempt)); err != nil {
+			return last
+		}
+	}
+	return last
+}
+
+func (c *Client) doOnce(ctx context.Context, method, rawURL string, dest any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return fmt.Errorf("build request for %s: %w", method, err)
 	}
@@ -143,7 +240,7 @@ func (c *Client) call(ctx context.Context, method string, params map[string]stri
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("call %s: unexpected HTTP %d", method, resp.StatusCode)
+		return &HTTPError{Method: method, Status: resp.StatusCode}
 	}
 
 	var envelope struct {

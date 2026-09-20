@@ -6,13 +6,17 @@ All notable changes to this provider will be documented in this file.
 
 ### Changed
 
-- `voipms_subaccount.canada_routing` accepts `value` / `premium` (API `1` / `2`). Reads return the name.
+- `voipms_subaccount` named constants: `device_type` (`ip_pbx` / `ata`), `protocol` (`sip` / `iax2`), `auth_type` (`password` / `ip`), `lock_international` (`allow` / `deny`), `international_route` and `canada_routing` (`value` / `premium`), `dialing_mode` (`main_account` / `e164` / `nanpa`), `call_pickup_behavior` (`pickup_and_be_picked_up` / `pickup_only` / `be_picked_up_only` / `disabled`). Numeric API ids still work; reads return the name.
+- `voipms_did.billing_type` accepts `per_minute` / `flat` (API `1` / `2`).
+- `voipms_voicemail.play_instructions` accepts `unread` / `skip_unread` (API `u` / `su`).
 - `voipms_subaccount.allow225` renamed to `allow_225_balance` (state upgraded from schema v0).
 - `voipms_subaccount.sip_traffic` renamed to `encrypted_sip_traffic` (state upgraded from schema v1). The VoIP.ms API field remains `sip_traffic`.
 - `voipms_subaccount.pop_restriction` is unset in state when `enable_pop_restriction` is false (VoIP.ms still returns the full POP list).
 - Unfiltered `getServersInfo` / `getForwardings` / `getVoicemails` / `getSubAccounts` responses are cached for the Terraform run so DID plans do not trip the VoIP.ms per-minute API limit.
 
 ### Fixed
+
+- REST client retries Cloudflare/gateway timeouts (`522` / `523` / `524`, plus `502` / `503` / `504`) with backoff. A VoIP.ms origin blip no longer fails the whole Terraform refresh on the first HTTP error.
 
 - `GetSubAccount` / import by numeric id: VoIP.ms `getSubAccounts?account=<id>` returns `no_subaccount`, so the client now falls back to listing all sub-accounts and matching by id.
 
