@@ -59,7 +59,7 @@ resource "voipms_subaccount" "gateway" {
   username              = "gateway"
   password              = var.gateway_sip_password
   description           = "Home FreeSWITCH gateway"
-  device_type           = "1"
+  device_type           = "ip_pbx"
   allowed_codecs        = "ulaw;g722"
   nat                   = "no"
   encrypted_sip_traffic = true

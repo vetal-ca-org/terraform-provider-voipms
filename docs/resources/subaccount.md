@@ -17,7 +17,7 @@ resource "voipms_subaccount" "gateway" {
   username              = "gateway"
   password              = var.gateway_sip_password
   description           = "Common SIP gateway"
-  device_type           = "1"
+  device_type           = "ip_pbx"
   allowed_codecs        = "ulaw;g722"
   nat                   = "no"
   encrypted_sip_traffic = true
@@ -40,14 +40,14 @@ resource "voipms_subaccount" "gateway" {
 
 For a PBX or phone endpoint, leave this disabled unless users of that extension should be able to retrieve the account balance.
 - `allowed_codecs` (String) Semicolon-separated codecs (e.g. `ulaw;g722`).
-- `auth_type` (String) Authentication type from `getAuthTypes` (`1` = user/password, `2` = IP).
-- `call_pickup_behavior` (String) Call pickup behavior.
+- `auth_type` (String) Authentication type from `getAuthTypes`. Use `password` (user/password, API `1`) or `ip` (static IP, API `2`). Numeric ids still work.
+- `call_pickup_behavior` (String) Call pickup permissions. Use `pickup_and_be_picked_up` (API `1`), `pickup_only` (API `2`), `be_picked_up_only` (API `3`), or `disabled` (API `4`). Numeric ids still work.
 - `callerid_number` (String) Outbound caller ID number.
 - `canada_routing` (String) Canada routing from `getRoutes`. Use `value` (API `1`) or `premium` (API `2`). Numeric `1`/`2` still work.
 - `default_e911` (String) Default E911 DID for this sub-account.
 - `description` (String) Label shown in the portal.
-- `device_type` (String) Device type from `getDeviceTypes` (`1` = IP PBX, `2` = ATA/softphone).
-- `dialing_mode` (String) Dialing mode (`0` = use main account setting).
+- `device_type` (String) Device type from `getDeviceTypes`. Use `ip_pbx` (Asterisk, IP PBX, Gateway or VoIP Switch; API `1`) or `ata` (ATA, IP Phone or Softphone; API `2`). Numeric ids still work.
+- `dialing_mode` (String) Outbound dialing mode. Use `main_account` (API `0`), `e164` (API `1`), or `nanpa` (API `2`). Numeric ids still work.
 - `dtmf_mode` (String) DTMF mode from `getDTMFModes` (e.g. `auto`).
 - `enable_internal_cnam` (Boolean) Send internal Caller ID name.
 - `enable_ip_restriction` (Boolean) Restrict registrations to `ip_restriction`.
@@ -60,17 +60,17 @@ For a PBX or phone endpoint, leave this disabled unless users of that extension 
 - `internal_dialtime` (String) Internal ring time in seconds.
 - `internal_extension` (String) Internal extension digits.
 - `internal_voicemail` (String) Internal voicemail mailbox. Set from `voipms_voicemail.this.id` or `data.voipms_voicemail.this.id`.
-- `international_route` (String) International route from `getRoutes`.
-- `ip` (String) Allowed IP or FQDN when `auth_type` is IP authentication.
+- `international_route` (String) International route from `getRoutes`. Use `value` (API `1`) or `premium` (API `2`). Numeric ids still work.
+- `ip` (String) Allowed IP or FQDN when `auth_type` is `ip`.
 - `ip_restriction` (String) Comma-separated IP allow-list when IP restriction is enabled.
 - `language` (String) IVR/system language (e.g. `en`).
-- `lock_international` (String) International lock from `getLockInternational`.
+- `lock_international` (String) Whether international calling is allowed. Use `allow` (API `0`) or `deny` (API `1`). Numeric ids still work.
 - `max_expiry` (Number) Maximum SIP registration expiry in seconds.
 - `music_on_hold` (String) Music on hold class (see `getMusicOnHold`).
 - `nat` (String) NAT setting from `getNAT` (`yes`, `no`, `route`, …).
 - `password` (String, Sensitive) SIP password (required for user/password auth).
 - `pop_restriction` (String) Comma-separated POP ids when `enable_pop_restriction` is true. When restriction is off, VoIP.ms still returns the full POP list; Terraform treats this attribute as unset so configs do not have to store that list.
-- `protocol` (String) Protocol id from `getProtocols` (`1` = SIP).
+- `protocol` (String) Protocol from `getProtocols`. Use `sip` (API `1`) or `iax2` (API `3`). Numeric ids still work.
 - `record_calls` (Boolean) Record calls for this sub-account.
 - `rtp_hold_timeout` (Number) RTP hold timeout in seconds.
 - `rtp_timeout` (Number) RTP timeout in seconds.

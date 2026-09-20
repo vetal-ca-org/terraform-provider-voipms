@@ -36,7 +36,7 @@ func voicemailDataSourceAttributes(lookup bool) map[string]schema.Attribute {
 		"say_time":                      dsBool("Announce message time."),
 		"timezone":                      dsString("Timezone."),
 		"say_callerid":                  dsBool("Announce caller ID."),
-		"play_instructions":             dsString("When to play instructions."),
+		"play_instructions":             dsString("When to play mailbox instructions (`unread` or `skip_unread`)."),
 		"language":                      dsString("Prompt language."),
 		"email_attachment_format":       dsString("Email attachment format."),
 		"unavailable_message_recording": dsString("Unavailable greeting recording id."),

@@ -112,25 +112,25 @@ func subaccountResourceAttributes() map[string]schema.Attribute {
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"protocol": schema.StringAttribute{
-			MarkdownDescription: "Protocol id from `getProtocols` (`1` = SIP).",
+			MarkdownDescription: "Protocol from `getProtocols`. Use `sip` (API `1`) or `iax2` (API `3`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"auth_type": schema.StringAttribute{
-			MarkdownDescription: "Authentication type from `getAuthTypes` (`1` = user/password, `2` = IP).",
+			MarkdownDescription: "Authentication type from `getAuthTypes`. Use `password` (user/password, API `1`) or `ip` (static IP, API `2`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"ip": schema.StringAttribute{
-			MarkdownDescription: "Allowed IP or FQDN when `auth_type` is IP authentication.",
+			MarkdownDescription: "Allowed IP or FQDN when `auth_type` is `ip`.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"device_type": schema.StringAttribute{
-			MarkdownDescription: "Device type from `getDeviceTypes` (`1` = IP PBX, `2` = ATA/softphone).",
+			MarkdownDescription: "Device type from `getDeviceTypes`. Use `ip_pbx` (Asterisk, IP PBX, Gateway or VoIP Switch; API `1`) or `ata` (ATA, IP Phone or Softphone; API `2`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
@@ -148,13 +148,13 @@ func subaccountResourceAttributes() map[string]schema.Attribute {
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"lock_international": schema.StringAttribute{
-			MarkdownDescription: "International lock from `getLockInternational`.",
+			MarkdownDescription: "Whether international calling is allowed. Use `allow` (API `0`) or `deny` (API `1`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"international_route": schema.StringAttribute{
-			MarkdownDescription: "International route from `getRoutes`.",
+			MarkdownDescription: "International route from `getRoutes`. Use `value` (API `1`) or `premium` (API `2`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
@@ -277,7 +277,7 @@ func subaccountResourceAttributes() map[string]schema.Attribute {
 			PlanModifiers:       []planmodifier.Bool{optBool()},
 		},
 		"dialing_mode": schema.StringAttribute{
-			MarkdownDescription: "Dialing mode (`0` = use main account setting).",
+			MarkdownDescription: "Outbound dialing mode. Use `main_account` (API `0`), `e164` (API `1`), or `nanpa` (API `2`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
@@ -289,7 +289,7 @@ func subaccountResourceAttributes() map[string]schema.Attribute {
 			PlanModifiers:       []planmodifier.String{optString()},
 		},
 		"call_pickup_behavior": schema.StringAttribute{
-			MarkdownDescription: "Call pickup behavior.",
+			MarkdownDescription: "Call pickup permissions. Use `pickup_and_be_picked_up` (API `1`), `pickup_only` (API `2`), `be_picked_up_only` (API `3`), or `disabled` (API `4`). Numeric ids still work.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers:       []planmodifier.String{optString()},
@@ -415,19 +415,15 @@ func (r *subaccountResource) ImportState(ctx context.Context, req resource.Impor
 func subaccountWriteParams(m subaccountModel) map[string]string {
 	params := map[string]string{}
 	setString(params, "description", m.Description)
-	setString(params, "protocol", m.Protocol)
-	setString(params, "auth_type", m.AuthType)
+	setNamed(params, "protocol", m.Protocol, client.Protocol)
+	setNamed(params, "auth_type", m.AuthType, client.AuthType)
 	setString(params, "password", m.Password)
 	setString(params, "ip", m.IP)
-	setString(params, "device_type", m.DeviceType)
+	setNamed(params, "device_type", m.DeviceType, client.DeviceType)
 	setString(params, "callerid_number", m.CallerIDNumber)
-	if id, ok := client.CanadaRouteID(m.CanadaRouting.ValueString()); ok && !m.CanadaRouting.IsNull() && !m.CanadaRouting.IsUnknown() {
-		params["canada_routing"] = id
-	} else {
-		setString(params, "canada_routing", m.CanadaRouting)
-	}
-	setString(params, "lock_international", m.LockInternational)
-	setString(params, "international_route", m.InternationalRoute)
+	setNamed(params, "canada_routing", m.CanadaRouting, client.CanadaRoutes)
+	setNamed(params, "lock_international", m.LockInternational, client.LockInternational)
+	setNamed(params, "international_route", m.InternationalRoute, client.CanadaRoutes)
 	setString(params, "music_on_hold", m.MusicOnHold)
 	setString(params, "language", m.Language)
 	setString(params, "allowed_codecs", m.AllowedCodecs)
@@ -447,9 +443,9 @@ func subaccountWriteParams(m subaccountModel) map[string]string {
 	setString(params, "internal_voicemail", m.InternalVoicemail)
 	setString(params, "internal_dialtime", m.InternalDialtime)
 	setBool01(params, "enable_internal_cnam", m.EnableInternalCNAM)
-	setString(params, "dialing_mode", m.DialingMode)
+	setNamed(params, "dialing_mode", m.DialingMode, client.DialingMode)
 	setString(params, "default_e911", m.DefaultE911)
-	setString(params, "call_pickup_behavior", m.CallPickupBehavior)
+	setNamed(params, "call_pickup_behavior", m.CallPickupBehavior, client.CallPickupBehavior)
 	return params
 }
 
@@ -459,19 +455,15 @@ func flattenSubaccount(src *client.SubAccount, dst *subaccountModel) {
 	dst.Account = strVal(src.Account)
 	dst.Username = strVal(src.Username)
 	dst.Description = strVal(src.Description)
-	dst.Protocol = strVal(src.Protocol)
-	dst.AuthType = strVal(src.AuthType)
+	dst.Protocol = namedVal(src.Protocol, client.Protocol)
+	dst.AuthType = namedVal(src.AuthType, client.AuthType)
 	dst.Password = strVal(src.Password)
 	dst.IP = strVal(src.IP)
-	dst.DeviceType = strVal(src.DeviceType)
+	dst.DeviceType = namedVal(src.DeviceType, client.DeviceType)
 	dst.CallerIDNumber = strVal(src.CallerIDNumber)
-	if name, ok := client.CanadaRouteName(src.CanadaRouting.String()); ok {
-		dst.CanadaRouting = types.StringValue(name)
-	} else {
-		dst.CanadaRouting = strVal(src.CanadaRouting)
-	}
-	dst.LockInternational = strVal(src.LockInternational)
-	dst.InternationalRoute = strVal(src.InternationalRoute)
+	dst.CanadaRouting = namedVal(src.CanadaRouting, client.CanadaRoutes)
+	dst.LockInternational = namedVal(src.LockInternational, client.LockInternational)
+	dst.InternationalRoute = namedVal(src.InternationalRoute, client.CanadaRoutes)
 	dst.MusicOnHold = strVal(src.MusicOnHold)
 	dst.Language = strVal(src.Language)
 	dst.AllowedCodecs = strVal(src.AllowedCodecs)
@@ -495,9 +487,9 @@ func flattenSubaccount(src *client.SubAccount, dst *subaccountModel) {
 	dst.InternalVoicemail = strVal(src.InternalVoicemail)
 	dst.InternalDialtime = strVal(src.InternalDialtime)
 	dst.EnableInternalCNAM = boolVal(src.EnableInternalCNAM)
-	dst.DialingMode = strVal(src.DialingMode)
+	dst.DialingMode = namedVal(src.DialingMode, client.DialingMode)
 	dst.DefaultE911 = strVal(src.DefaultE911)
-	dst.CallPickupBehavior = strVal(src.CallPickupBehavior)
+	dst.CallPickupBehavior = namedVal(src.CallPickupBehavior, client.CallPickupBehavior)
 }
 
 func flattenSubaccountCopy(src *client.SubAccount) subaccountModel {
@@ -529,11 +521,14 @@ func (r *subaccountResource) ModifyPlan(ctx context.Context, req resource.Modify
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		if !plan.CanadaRouting.IsNull() && !plan.CanadaRouting.IsUnknown() &&
-			!state.CanadaRouting.IsNull() && !state.CanadaRouting.IsUnknown() &&
-			client.CanadaRoutesEqual(plan.CanadaRouting.ValueString(), state.CanadaRouting.ValueString()) {
-			plan.CanadaRouting = state.CanadaRouting
-		}
+		keepNamed(&plan.Protocol, state.Protocol, client.Protocol)
+		keepNamed(&plan.AuthType, state.AuthType, client.AuthType)
+		keepNamed(&plan.DeviceType, state.DeviceType, client.DeviceType)
+		keepNamed(&plan.CanadaRouting, state.CanadaRouting, client.CanadaRoutes)
+		keepNamed(&plan.LockInternational, state.LockInternational, client.LockInternational)
+		keepNamed(&plan.InternationalRoute, state.InternationalRoute, client.CanadaRoutes)
+		keepNamed(&plan.DialingMode, state.DialingMode, client.DialingMode)
+		keepNamed(&plan.CallPickupBehavior, state.CallPickupBehavior, client.CallPickupBehavior)
 	}
 
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)

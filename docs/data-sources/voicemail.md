@@ -36,7 +36,7 @@ data "voipms_voicemail" "johns_voicemail" {
 - `id` (String) VoIP.ms identifier (same as `mailbox`). Use this to attach the box to a DID: `voicemail = data.voipms_voicemail.this.id`.
 - `language` (String) Prompt language.
 - `password` (String, Sensitive) Mailbox PIN.
-- `play_instructions` (String) When to play instructions.
+- `play_instructions` (String) When to play mailbox instructions (`unread` or `skip_unread`).
 - `route` (String) DID routing value (`vm:{mailbox}`). Use this for `voipms_did` `routing` / failover.
 - `say_callerid` (Boolean) Announce caller ID.
 - `say_time` (Boolean) Announce message time.
