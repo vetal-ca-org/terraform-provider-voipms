@@ -10,33 +10,30 @@ type subAccountsResponse struct {
 	Accounts []SubAccount `json:"accounts"`
 }
 
-// GetSubAccounts lists sub-accounts. account may be an API id or full SIP login.
+// GetSubAccounts lists sub-accounts. account may be an API id, SIP login, or username suffix.
 func (c *Client) GetSubAccounts(ctx context.Context, account string) ([]SubAccount, error) {
-	load := func() ([]SubAccount, error) {
-		params := map[string]string{}
-		if account != "" {
-			params["account"] = account
-		}
+	items, err := c.cachedSubAccounts(func() ([]SubAccount, error) {
 		var resp subAccountsResponse
-		err := c.Call(ctx, "getSubAccounts", params, &resp)
-		if err != nil {
+		if err := c.Call(ctx, "getSubAccounts", map[string]string{}, &resp); err != nil {
 			if emptyResult(err) {
 				return []SubAccount{}, nil
 			}
 			return nil, err
 		}
 		return resp.Accounts, nil
+	})
+	if err != nil || account == "" {
+		return items, err
 	}
-	if account == "" {
-		return c.cachedSubAccounts(load)
-	}
-	return load()
+	return filterList(items, func(x *SubAccount) bool {
+		return x.ID.String() == account || x.Account.String() == account || x.Username.String() == account
+	}), nil
 }
 
 // GetSubAccount returns one sub-account by API id, SIP login (`{main}_{username}`),
 // or username suffix. VoIP.ms only accepts the SIP login (or an empty filter) on
-// getSubAccounts — numeric ids return status no_subaccount — so we fall back to a
-// full list and match locally when a filtered call returns nothing.
+// getSubAccounts — numeric ids return status no_subaccount — so we list all and
+// match locally.
 func (c *Client) GetSubAccount(ctx context.Context, account string) (*SubAccount, error) {
 	accounts, err := c.GetSubAccounts(ctx, account)
 	if err != nil {
@@ -48,7 +45,6 @@ func (c *Client) GetSubAccount(ctx context.Context, account string) (*SubAccount
 	if account == "" {
 		return nil, fmt.Errorf("%w: sub-account %s", ErrNotFound, account)
 	}
-	// Filtered lookup miss (typical for numeric id): list all and match.
 	all, err := c.GetSubAccounts(ctx, "")
 	if err != nil {
 		return nil, err
@@ -83,5 +79,5 @@ func (c *Client) UpdateSubAccount(ctx context.Context, params map[string]string)
 
 // DeleteSubAccount deletes a sub-account by numeric API id.
 func (c *Client) DeleteSubAccount(ctx context.Context, id string) error {
-	return c.Call(ctx, "delSubAccount", map[string]string{"id": id}, nil)
+	return c.CallWrite(ctx, "delSubAccount", map[string]string{"id": id}, nil)
 }

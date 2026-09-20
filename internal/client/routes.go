@@ -8,9 +8,11 @@ import (
 // VoIP.ms DID routing prefixes. The target after the colon is the API id
 // (mailbox, forwarding id) or the SIP login for account: routes.
 const (
-	RouteKindAccount = "account"
-	RouteKindFwd     = "fwd"
-	RouteKindVM      = "vm"
+	RouteKindAccount  = "account"
+	RouteKindFwd      = "fwd"
+	RouteKindVM       = "vm"
+	RouteKindGroup    = "grp"
+	RouteKindTimeCond = "tc"
 )
 
 // AccountRoute is the DID routing value for a sub-account SIP login.
@@ -22,13 +24,21 @@ func ForwardingRoute(id string) string { return RouteKindFwd + ":" + id }
 // VoicemailRoute is the DID routing value for a mailbox id.
 func VoicemailRoute(mailbox string) string { return RouteKindVM + ":" + mailbox }
 
+// RingGroupRoute is the DID routing value for a ring group id.
+func RingGroupRoute(id string) string { return RouteKindGroup + ":" + id }
+
+// TimeConditionRoute is the DID routing value for a time condition id.
+func TimeConditionRoute(id string) string { return RouteKindTimeCond + ":" + id }
+
 // RouteTables is the account data needed to resolve named DID routes.
 type RouteTables struct {
-	Forwardings []Forwarding
-	Voicemails  []Voicemail
+	Forwardings    []Forwarding
+	Voicemails     []Voicemail
+	RingGroups     []RingGroup
+	TimeConditions []TimeCondition
 }
 
-// CanonicalRoute rewrites fwd:/vm: targets to the numeric API form.
+// CanonicalRoute rewrites fwd:/vm:/grp:/tc: targets to the numeric API form.
 // Other prefixes (account:, sys:, none:) are returned unchanged.
 func CanonicalRoute(route string, tables RouteTables) (string, error) {
 	route = strings.TrimSpace(route)
@@ -53,6 +63,18 @@ func CanonicalRoute(route string, tables RouteTables) (string, error) {
 			return "", fmt.Errorf("route %q: %w", route, err)
 		}
 		return "vm:" + box.Mailbox.String(), nil
+	case "grp":
+		group, err := MatchRingGroup(tables.RingGroups, rest)
+		if err != nil {
+			return "", fmt.Errorf("route %q: %w", route, err)
+		}
+		return "grp:" + group.RingGroup.String(), nil
+	case "tc":
+		cond, err := MatchTimeCondition(tables.TimeConditions, rest)
+		if err != nil {
+			return "", fmt.Errorf("route %q: %w", route, err)
+		}
+		return "tc:" + cond.TimeCondition.String(), nil
 	default:
 		return route, nil
 	}

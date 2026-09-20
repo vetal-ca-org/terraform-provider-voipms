@@ -42,4 +42,10 @@ data "voipms_voicemail" "johns_voicemail" {
 - `say_time` (Boolean) Announce message time.
 - `skip_password` (Boolean) Skip PIN prompt.
 - `timezone` (String) Timezone.
+- `transcription` (Boolean) Voicemail transcription enabled.
+- `transcription_format` (String) Transcription format (`text` or `html`).
+- `transcription_locale` (String) Transcription locale.
+- `transcription_redaction` (Boolean) Transcript redaction enabled.
+- `transcription_sentiment` (Boolean) Transcript sentiment analysis enabled.
+- `transcription_summary` (Boolean) Transcript summary enabled.
 - `unavailable_message_recording` (String) Unavailable greeting recording id.

@@ -51,5 +51,5 @@ func (c *Client) SetCallerIDFilter(ctx context.Context, params map[string]string
 
 // DeleteCallerIDFilter deletes a filter by id.
 func (c *Client) DeleteCallerIDFilter(ctx context.Context, id string) error {
-	return c.Call(ctx, "delCallerIDFiltering", map[string]string{"filtering": id}, nil)
+	return c.CallWrite(ctx, "delCallerIDFiltering", map[string]string{"filtering": id}, nil)
 }

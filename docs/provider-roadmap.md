@@ -2,7 +2,7 @@
 
 Coverage of the VoIP.ms REST/JSON API in this Terraform provider.
 
-**Status:** resources, single data sources, and list data sources for the table below are implemented. IVRs, ring groups, queues, time conditions, DISA, SIP URIs, recordings, call hunting, conferences, and reseller clients are not implemented.
+**Status:** resources, single data sources, and list data sources for the table below are implemented. IVRs, queues, DISA, SIP URIs, call hunting, conferences, and reseller clients are not implemented.
 
 ## Implemented
 
@@ -17,12 +17,15 @@ Coverage of the VoIP.ms REST/JSON API in this Terraform provider.
 | Caller ID filtering | `getCallerIDFiltering` / `createCallerIDFiltering` / `setCallerIDFiltering` / `delCallerIDFiltering` | `voipms_caller_id_filter` / `voipms_caller_id_filters` |
 | Phonebook | `getPhonebook` / `createPhonebook` / `setPhonebook` / `delPhonebook` | `voipms_phonebook_entry` / `voipms_phonebook_entries` |
 | Phonebook groups | `getPhonebookGroups` / `createPhonebookGroup` / `setPhonebookGroup` / `delPhonebookGroup` | `voipms_phonebook_group` / `voipms_phonebook_groups` |
+| Ring groups | `getRingGroups` / `setRingGroup` / `delRingGroup` | `voipms_ring_group` / `voipms_ring_groups` |
+| Time conditions | `getTimeConditions` / `setTimeCondition` / `delTimeCondition` | `voipms_time_condition` / `voipms_time_conditions` |
+| Recordings | `getRecordings` | `voipms_recording` / `voipms_recordings` (read-only; upload in the portal) |
 | Account balance | `getBalance` | `voipms_balance` |
 | POP / servers | `getServersInfo` | `voipms_server` / `voipms_servers` |
 
 ## Not implemented
 
-IVRs, ring groups, queues, time conditions, DISA, SIP URIs, recordings, call hunting, conferences, reseller clients, and DID order/cancel.
+IVRs, queues, DISA, SIP URIs, call hunting, conferences, reseller clients, and DID order/cancel.
 
 ## Reference catalog methods (used for schema / lookup)
 

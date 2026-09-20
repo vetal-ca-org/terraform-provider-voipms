@@ -12,25 +12,20 @@ type forwardingsResponse struct {
 
 // GetForwardings lists call forwardings. id, if set, filters to one forwarding code.
 func (c *Client) GetForwardings(ctx context.Context, id string) ([]Forwarding, error) {
-	load := func() ([]Forwarding, error) {
-		params := map[string]string{}
-		if id != "" {
-			params["forwarding"] = id
-		}
+	items, err := c.cachedForwardings(func() ([]Forwarding, error) {
 		var resp forwardingsResponse
-		err := c.Call(ctx, "getForwardings", params, &resp)
-		if err != nil {
+		if err := c.Call(ctx, "getForwardings", map[string]string{}, &resp); err != nil {
 			if emptyResult(err) {
 				return []Forwarding{}, nil
 			}
 			return nil, err
 		}
 		return resp.Forwardings, nil
+	})
+	if err != nil || id == "" {
+		return items, err
 	}
-	if id == "" {
-		return c.cachedForwardings(load)
-	}
-	return load()
+	return filterList(items, func(x *Forwarding) bool { return x.Forwarding.String() == id }), nil
 }
 
 // GetForwarding returns one forwarding by id.
@@ -66,5 +61,5 @@ func (c *Client) SetForwarding(ctx context.Context, params map[string]string) er
 
 // DeleteForwarding deletes a forwarding by id.
 func (c *Client) DeleteForwarding(ctx context.Context, id string) error {
-	return c.Call(ctx, "delForwarding", map[string]string{"forwarding": id}, nil)
+	return c.CallWrite(ctx, "delForwarding", map[string]string{"forwarding": id}, nil)
 }

@@ -60,5 +60,5 @@ func (c *Client) SetCallback(ctx context.Context, params map[string]string) erro
 
 // DeleteCallback deletes a callback by id.
 func (c *Client) DeleteCallback(ctx context.Context, id string) error {
-	return c.Call(ctx, "delCallback", map[string]string{"callback": id}, nil)
+	return c.CallWrite(ctx, "delCallback", map[string]string{"callback": id}, nil)
 }

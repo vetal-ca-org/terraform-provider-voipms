@@ -12,25 +12,20 @@ type voicemailsResponse struct {
 
 // GetVoicemails lists voicemail boxes. mailbox, if set, filters to one box.
 func (c *Client) GetVoicemails(ctx context.Context, mailbox string) ([]Voicemail, error) {
-	load := func() ([]Voicemail, error) {
-		params := map[string]string{}
-		if mailbox != "" {
-			params["mailbox"] = mailbox
-		}
+	items, err := c.cachedVoicemails(func() ([]Voicemail, error) {
 		var resp voicemailsResponse
-		err := c.Call(ctx, "getVoicemails", params, &resp)
-		if err != nil {
+		if err := c.Call(ctx, "getVoicemails", map[string]string{}, &resp); err != nil {
 			if emptyResult(err) {
 				return []Voicemail{}, nil
 			}
 			return nil, err
 		}
 		return resp.Voicemails, nil
+	})
+	if err != nil || mailbox == "" {
+		return items, err
 	}
-	if mailbox == "" {
-		return c.cachedVoicemails(load)
-	}
-	return load()
+	return filterList(items, func(x *Voicemail) bool { return x.Mailbox.String() == mailbox }), nil
 }
 
 // GetVoicemail returns one mailbox.
@@ -71,5 +66,5 @@ func (c *Client) UpdateVoicemail(ctx context.Context, params map[string]string) 
 
 // DeleteVoicemail deletes a mailbox.
 func (c *Client) DeleteVoicemail(ctx context.Context, mailbox string) error {
-	return c.Call(ctx, "delVoicemail", map[string]string{"mailbox": mailbox}, nil)
+	return c.CallWrite(ctx, "delVoicemail", map[string]string{"mailbox": mailbox}, nil)
 }

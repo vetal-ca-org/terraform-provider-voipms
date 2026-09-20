@@ -24,7 +24,9 @@ var ErrNotFound = errors.New("voip.ms object not found")
 const DefaultBaseURL = "https://voip.ms/api/v1/rest.php"
 
 const (
-	defaultTimeout     = 30 * time.Second
+	// VoIP.ms routinely takes tens of seconds under load, and a write that
+	// times out client-side may still have been applied server-side.
+	defaultTimeout     = 60 * time.Second
 	defaultMaxAttempts = 5
 )
 
@@ -177,7 +179,10 @@ func (c *Client) Call(ctx context.Context, method string, params map[string]stri
 }
 
 // CallWrite is like Call but sends empty parameter values so fields can be cleared.
+// Cached lists are dropped either way: a write that times out client-side may
+// still have been applied, so the caches are suspect regardless of the outcome.
 func (c *Client) CallWrite(ctx context.Context, method string, params map[string]string, dest any) error {
+	defer c.invalidate()
 	return c.call(ctx, method, params, dest, false)
 }
 
@@ -223,14 +228,14 @@ func (c *Client) call(ctx context.Context, method string, params map[string]stri
 func (c *Client) doOnce(ctx context.Context, method, rawURL string, dest any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
-		return fmt.Errorf("build request for %s: %w", method, err)
+		return fmt.Errorf("build request for %s: %w", method, redactRequestError(err))
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("call %s: %w", method, err)
+		return fmt.Errorf("call %s: %w", method, redactRequestError(err))
 	}
 	defer resp.Body.Close()
 
@@ -287,4 +292,31 @@ func (c *Client) GetBalance(ctx context.Context) (Balance, error) {
 		return Balance{}, err
 	}
 	return resp.Balance, nil
+}
+
+// redactRequestError strips the query string out of a *url.Error. api_username
+// and api_password travel in the query, and net/http puts the whole URL in the
+// error it returns, so wrapping one verbatim prints the API password into
+// Terraform output and CI logs.
+func redactRequestError(err error) error {
+	var uerr *url.Error
+	if !errors.As(err, &uerr) {
+		return err
+	}
+	safe := "(url redacted)"
+	if parsed, perr := url.Parse(uerr.URL); perr == nil {
+		parsed.RawQuery = ""
+		safe = parsed.String()
+	}
+	return fmt.Errorf("%s %s: %w", uerr.Op, safe, uerr.Err)
+}
+
+func filterList[T any](items []T, keep func(*T) bool) []T {
+	out := make([]T, 0, 1)
+	for i := range items {
+		if keep(&items[i]) {
+			out = append(out, items[i])
+		}
+	}
+	return out
 }

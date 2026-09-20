@@ -38,98 +38,123 @@ type SubAccount struct {
 	DefaultE911               FlexString `json:"default_e911"`
 	CallPickupBehavior        FlexString `json:"call_pickup_behavior"`
 	InternalExtensionLocation FlexString `json:"internal_extension_location"`
+	ParkingLot                FlexString `json:"parking_lot"`
+	TFCarrier                 FlexString `json:"tfcarrier"`
+	TranscriptionStartDelay   FlexString `json:"transcription_start_delay"`
 }
 
 func (s SubAccount) SetParams() map[string]string {
 	return map[string]string{
-		"id":                     s.ID.String(),
-		"description":            s.Description.String(),
-		"auth_type":              s.AuthType.String(),
-		"password":               s.Password.String(),
-		"ip":                     s.IP.String(),
-		"device_type":            s.DeviceType.String(),
-		"callerid_number":        s.CallerIDNumber.String(),
-		"canada_routing":         s.CanadaRouting.String(),
-		"lock_international":     s.LockInternational.String(),
-		"international_route":    s.InternationalRoute.String(),
-		"music_on_hold":          s.MusicOnHold.String(),
-		"language":               s.Language.String(),
-		"record_calls":           s.RecordCalls.String(),
-		"allowed_codecs":         s.AllowedCodecs.String(),
-		"dtmf_mode":              s.DTMFMode.String(),
-		"nat":                    s.NAT.String(),
-		"sip_traffic":            s.SIPTraffic.String(),
-		"max_expiry":             s.MaxExpiry.String(),
-		"rtp_timeout":            s.RTPTimeout.String(),
-		"rtp_hold_timeout":       s.RTPHoldTimeout.String(),
-		"ip_restriction":         s.IPRestriction.String(),
-		"enable_ip_restriction":  s.EnableIPRestriction.String(),
-		"pop_restriction":        s.POPRestriction.String(),
-		"enable_pop_restriction": s.EnablePOPRestriction.String(),
-		"internal_extension":     s.InternalExtension.String(),
-		"internal_voicemail":     s.InternalVoicemail.String(),
-		"internal_dialtime":      s.InternalDialtime.String(),
-		"allow225":               s.Allow225.String(),
-		"enable_internal_cnam":   s.EnableInternalCNAM.String(),
-		"dialing_mode":           s.DialingMode.String(),
-		"default_e911":           s.DefaultE911.String(),
-		"call_pickup_behavior":   s.CallPickupBehavior.String(),
+		"id":                          s.ID.String(),
+		"description":                 s.Description.String(),
+		"auth_type":                   s.AuthType.String(),
+		"password":                    s.Password.String(),
+		"ip":                          s.IP.String(),
+		"device_type":                 s.DeviceType.String(),
+		"callerid_number":             s.CallerIDNumber.String(),
+		"canada_routing":              s.CanadaRouting.String(),
+		"lock_international":          s.LockInternational.String(),
+		"international_route":         s.InternationalRoute.String(),
+		"music_on_hold":               s.MusicOnHold.String(),
+		"language":                    s.Language.String(),
+		"record_calls":                s.RecordCalls.String(),
+		"allowed_codecs":              s.AllowedCodecs.String(),
+		"dtmf_mode":                   s.DTMFMode.String(),
+		"nat":                         s.NAT.String(),
+		"sip_traffic":                 s.SIPTraffic.String(),
+		"max_expiry":                  s.MaxExpiry.String(),
+		"rtp_timeout":                 s.RTPTimeout.String(),
+		"rtp_hold_timeout":            s.RTPHoldTimeout.String(),
+		"ip_restriction":              s.IPRestriction.String(),
+		"enable_ip_restriction":       s.EnableIPRestriction.String(),
+		"pop_restriction":             s.POPRestriction.String(),
+		"enable_pop_restriction":      s.EnablePOPRestriction.String(),
+		"internal_extension":          s.InternalExtension.String(),
+		"internal_voicemail":          s.InternalVoicemail.String(),
+		"internal_dialtime":           s.InternalDialtime.String(),
+		"allow225":                    s.Allow225.String(),
+		"enable_internal_cnam":        s.EnableInternalCNAM.String(),
+		"dialing_mode":                s.DialingMode.String(),
+		"default_e911":                s.DefaultE911.String(),
+		"call_pickup_behavior":        s.CallPickupBehavior.String(),
+		"internal_extension_location": s.InternalExtensionLocation.String(),
+		"parking_lot":                 s.ParkingLot.String(),
+		"tfcarrier":                   s.TFCarrier.String(),
+		"transcription_start_delay":   s.TranscriptionStartDelay.String(),
 	}
 }
 
 // DID is a phone number from getDIDsInfo.
 type DID struct {
-	DID                   FlexString `json:"did"`
-	Description           FlexString `json:"description"`
-	VoicemailThreshold    FlexString `json:"voicemail_threshold"`
-	Routing               FlexString `json:"routing"`
-	FailoverBusy          FlexString `json:"failover_busy"`
-	FailoverUnreachable   FlexString `json:"failover_unreachable"`
-	FailoverNoanswer      FlexString `json:"failover_noanswer"`
-	Voicemail             FlexString `json:"voicemail"`
-	POP                   FlexString `json:"pop"`
-	Dialtime              FlexString `json:"dialtime"`
-	CNAM                  FlexString `json:"cnam"`
-	E911                  FlexString `json:"e911"`
-	CallerIDPrefix        FlexString `json:"callerid_prefix"`
-	RecordCalls           FlexString `json:"record_calls"`
-	Note                  FlexString `json:"note"`
-	BillingType           FlexString `json:"billing_type"`
-	NextBilling           FlexString `json:"next_billing"`
-	OrderDate             FlexString `json:"order_date"`
-	SMSAvailable          FlexString `json:"sms_available"`
-	SMSEnabled            FlexString `json:"sms_enabled"`
-	MMSAvailable          FlexString `json:"mms_available"`
-	SMSEmail              FlexString `json:"sms_email"`
-	SMSEmailEnabled       FlexString `json:"sms_email_enabled"`
-	SMSForward            FlexString `json:"sms_forward"`
-	SMSForwardEnabled     FlexString `json:"sms_forward_enabled"`
-	SMSURLCallback        FlexString `json:"sms_url_callback"`
-	SMSURLCallbackEnabled FlexString `json:"sms_url_callback_enabled"`
-	SMSURLCallbackRetry   FlexString `json:"sms_url_callback_retry"`
-	WebhookEnabled        FlexString `json:"webhook_enabled"`
-	Webhook               FlexString `json:"webhook"`
-	Dialmode              FlexString `json:"dialmode"`
-	SMSSIPAccount         FlexString `json:"sms_sipaccount"`
-	SMSSIPAccountEnabled  FlexString `json:"sms_sipaccount_enabled"`
+	DID                     FlexString `json:"did"`
+	Description             FlexString `json:"description"`
+	VoicemailThreshold      FlexString `json:"voicemail_threshold"`
+	Routing                 FlexString `json:"routing"`
+	FailoverBusy            FlexString `json:"failover_busy"`
+	FailoverUnreachable     FlexString `json:"failover_unreachable"`
+	FailoverNoanswer        FlexString `json:"failover_noanswer"`
+	Voicemail               FlexString `json:"voicemail"`
+	POP                     FlexString `json:"pop"`
+	Dialtime                FlexString `json:"dialtime"`
+	CNAM                    FlexString `json:"cnam"`
+	E911                    FlexString `json:"e911"`
+	CallerIDPrefix          FlexString `json:"callerid_prefix"`
+	RecordCalls             FlexString `json:"record_calls"`
+	Note                    FlexString `json:"note"`
+	BillingType             FlexString `json:"billing_type"`
+	NextBilling             FlexString `json:"next_billing"`
+	OrderDate               FlexString `json:"order_date"`
+	SMSAvailable            FlexString `json:"sms_available"`
+	SMSEnabled              FlexString `json:"sms_enabled"`
+	MMSAvailable            FlexString `json:"mms_available"`
+	SMSEmail                FlexString `json:"sms_email"`
+	SMSEmailEnabled         FlexString `json:"sms_email_enabled"`
+	SMSForward              FlexString `json:"sms_forward"`
+	SMSForwardEnabled       FlexString `json:"sms_forward_enabled"`
+	SMSURLCallback          FlexString `json:"sms_url_callback"`
+	SMSURLCallbackEnabled   FlexString `json:"sms_url_callback_enabled"`
+	SMSURLCallbackRetry     FlexString `json:"sms_url_callback_retry"`
+	WebhookEnabled          FlexString `json:"webhook_enabled"`
+	Webhook                 FlexString `json:"webhook"`
+	Dialmode                FlexString `json:"dialmode"`
+	SMSSIPAccount           FlexString `json:"sms_sipaccount"`
+	SMSSIPAccountEnabled    FlexString `json:"sms_sipaccount_enabled"`
+	InboundDialingMode      FlexString `json:"inbound_dialing_mode"`
+	PortOutPIN              FlexString `json:"port_out_pin"`
+	Transcribe              FlexString `json:"transcribe"`
+	TranscriptionEmail      FlexString `json:"transcription_email"`
+	TranscriptionLocale     FlexString `json:"transcription_locale"`
+	TranscriptionRedaction  FlexString `json:"transcription_redaction"`
+	TranscriptionSentiment  FlexString `json:"transcription_sentiment"`
+	TranscriptionSummary    FlexString `json:"transcription_summary"`
+	TranscriptionStartDelay FlexString `json:"transcription_start_delay"`
 }
 
 func (d DID) SetInfoParams() map[string]string {
 	return map[string]string{
-		"did":                  d.DID.String(),
-		"routing":              d.Routing.String(),
-		"failover_busy":        d.FailoverBusy.String(),
-		"failover_unreachable": d.FailoverUnreachable.String(),
-		"failover_noanswer":    d.FailoverNoanswer.String(),
-		"voicemail":            d.Voicemail.String(),
-		"pop":                  d.POP.String(),
-		"dialtime":             d.Dialtime.String(),
-		"cnam":                 d.CNAM.String(),
-		"callerid_prefix":      d.CallerIDPrefix.String(),
-		"note":                 d.Note.String(),
-		"billing_type":         d.BillingType.String(),
-		"record_calls":         d.RecordCalls.String(),
-		"voicemail_threshold":  d.VoicemailThreshold.String(),
+		"did":                       d.DID.String(),
+		"routing":                   d.Routing.String(),
+		"failover_busy":             d.FailoverBusy.String(),
+		"failover_unreachable":      d.FailoverUnreachable.String(),
+		"failover_noanswer":         d.FailoverNoanswer.String(),
+		"voicemail":                 d.Voicemail.String(),
+		"pop":                       d.POP.String(),
+		"dialtime":                  d.Dialtime.String(),
+		"cnam":                      d.CNAM.String(),
+		"callerid_prefix":           d.CallerIDPrefix.String(),
+		"note":                      d.Note.String(),
+		"billing_type":              d.BillingType.String(),
+		"record_calls":              d.RecordCalls.String(),
+		"voicemail_threshold":       d.VoicemailThreshold.String(),
+		"inbound_dialing_mode":      d.InboundDialingMode.String(),
+		"port_out_pin":              d.PortOutPIN.String(),
+		"transcribe":                zeroOne(d.Transcribe),
+		"transcription_email":       d.TranscriptionEmail.String(),
+		"transcription_locale":      d.TranscriptionLocale.String(),
+		"transcription_redaction":   yesNo(d.TranscriptionRedaction),
+		"transcription_sentiment":   yesNo(d.TranscriptionSentiment),
+		"transcription_summary":     yesNo(d.TranscriptionSummary),
+		"transcription_start_delay": d.TranscriptionStartDelay.String(),
 	}
 }
 
@@ -190,55 +215,122 @@ type Voicemail struct {
 	Language                    FlexString `json:"language"`
 	EmailAttachmentFormat       FlexString `json:"email_attachment_format"`
 	UnavailableMessageRecording FlexString `json:"unavailable_message_recording"`
+	Client                      FlexString `json:"client"`
+	Transcription               FlexString `json:"transcription"`
+	TranscriptionLocale         FlexString `json:"transcription_locale"`
+	TranscriptionRedaction      FlexString `json:"transcription_redaction"`
+	TranscriptionSummary        FlexString `json:"transcription_summary"`
+	TranscriptionSentiment      FlexString `json:"transcription_sentiment"`
+	TranscriptionFormat         FlexString `json:"transcription_format"`
 }
 
 func (v Voicemail) SetParams() map[string]string {
-	skip := v.SkipPassword.String()
-	if v.SkipPassword.Bool() {
-		skip = "yes"
-	} else if skip == "0" {
-		skip = "no"
-	}
-	attach := v.AttachMessage.String()
-	if attach == "1" {
-		attach = "yes"
-	} else if attach == "0" {
-		attach = "no"
-	}
-	del := v.DeleteMessage.String()
-	if del == "1" {
-		del = "yes"
-	} else if del == "0" {
-		del = "no"
-	}
-	sayTime := v.SayTime.String()
-	if sayTime == "1" {
-		sayTime = "yes"
-	} else if sayTime == "0" {
-		sayTime = "no"
-	}
-	sayCID := v.SayCallerID.String()
-	if sayCID == "1" {
-		sayCID = "yes"
-	} else if sayCID == "0" {
-		sayCID = "no"
-	}
-	return map[string]string{
+	params := map[string]string{
 		"mailbox":                       v.Mailbox.String(),
 		"name":                          v.Name.String(),
 		"password":                      v.Password.String(),
-		"skip_password":                 skip,
+		"skip_password":                 yesNo(v.SkipPassword),
 		"email":                         v.Email.String(),
-		"attach_message":                attach,
-		"delete_message":                del,
-		"say_time":                      sayTime,
+		"attach_message":                yesNo(v.AttachMessage),
+		"delete_message":                yesNo(v.DeleteMessage),
+		"say_time":                      yesNo(v.SayTime),
 		"timezone":                      v.Timezone.String(),
-		"say_callerid":                  sayCID,
+		"say_callerid":                  yesNo(v.SayCallerID),
 		"play_instructions":             v.PlayInstructions.String(),
 		"language":                      v.Language.String(),
 		"email_attachment_format":       v.EmailAttachmentFormat.String(),
 		"unavailable_message_recording": v.UnavailableMessageRecording.String(),
+		"transcription":                 yesNo(v.Transcription),
+		"transcription_locale":          v.TranscriptionLocale.String(),
+		"transcription_redaction":       yesNo(v.TranscriptionRedaction),
+		"transcription_summary":         yesNo(v.TranscriptionSummary),
+		"transcription_sentiment":       yesNo(v.TranscriptionSentiment),
+		"transcription_format":          v.TranscriptionFormat.String(),
 	}
+	// Reseller-only. Sending client=0 on a non-reseller account is rejected.
+	if id := v.Client.String(); id != "" && id != "0" {
+		params["client"] = id
+	}
+	return params
+}
+
+// zeroOne renders a VoIP.ms boolean as 1/0.
+func zeroOne(v FlexString) string {
+	if v.Bool() {
+		return "1"
+	}
+	return "0"
+}
+
+// yesNo renders a VoIP.ms boolean for a set* call. getVoicemails answers with
+// 1/0 or Y/N depending on the field; every setVoicemail flag wants yes/no.
+func yesNo(v FlexString) string {
+	if v.Bool() {
+		return "yes"
+	}
+	return "no"
+}
+
+// RingGroup is a ring group from getRingGroups.
+type RingGroup struct {
+	RingGroup          FlexString `json:"ring_group"`
+	Name               FlexString `json:"name"`
+	Members            FlexString `json:"members"`
+	Voicemail          FlexString `json:"voicemail"`
+	CallerAnnouncement FlexString `json:"caller_announcement"`
+	MusicOnHold        FlexString `json:"music_on_hold"`
+	Language           FlexString `json:"language"`
+}
+
+func (g RingGroup) SetParams() map[string]string {
+	return map[string]string{
+		"ring_group":          g.RingGroup.String(),
+		"name":                g.Name.String(),
+		"members":             g.Members.String(),
+		"voicemail":           g.Voicemail.String(),
+		"caller_announcement": g.CallerAnnouncement.String(),
+		"music_on_hold":       g.MusicOnHold.String(),
+		"language":            g.Language.String(),
+	}
+}
+
+// TimeCondition is a time-of-day routing rule from getTimeConditions. The six
+// window fields are parallel semicolon-separated lists — `starthour` "8;9" with
+// `weekdaystart` "mon;sat" is two windows, and VoIP.ms rejects a write whose
+// lists are not all the same length.
+type TimeCondition struct {
+	TimeCondition  FlexString `json:"timecondition"`
+	Name           FlexString `json:"name"`
+	RoutingMatch   FlexString `json:"routing_match"`
+	RoutingNomatch FlexString `json:"routing_nomatch"`
+	StartHour      FlexString `json:"starthour"`
+	StartMinute    FlexString `json:"startminute"`
+	EndHour        FlexString `json:"endhour"`
+	EndMinute      FlexString `json:"endminute"`
+	WeekdayStart   FlexString `json:"weekdaystart"`
+	WeekdayEnd     FlexString `json:"weekdayend"`
+}
+
+func (t TimeCondition) SetParams() map[string]string {
+	return map[string]string{
+		"timecondition":   t.TimeCondition.String(),
+		"name":            t.Name.String(),
+		"routing_match":   t.RoutingMatch.String(),
+		"routing_nomatch": t.RoutingNomatch.String(),
+		"starthour":       t.StartHour.String(),
+		"startminute":     t.StartMinute.String(),
+		"endhour":         t.EndHour.String(),
+		"endminute":       t.EndMinute.String(),
+		"weekdaystart":    t.WeekdayStart.String(),
+		"weekdayend":      t.WeekdayEnd.String(),
+	}
+}
+
+// Recording is an audio prompt from getRecordings. VoIP.ms answers catalog
+// style — value/description, not id/name — the way getMusicOnHold does.
+type Recording struct {
+	Recording   FlexString `json:"value"`
+	Description FlexString `json:"description"`
 }
 
 // Callback is a callback from getCallbacks.

@@ -40,6 +40,12 @@ func voicemailDataSourceAttributes(lookup bool) map[string]schema.Attribute {
 		"language":                      dsString("Prompt language."),
 		"email_attachment_format":       dsString("Email attachment format."),
 		"unavailable_message_recording": dsString("Unavailable greeting recording id."),
+		"transcription":                 dsBool("Voicemail transcription enabled."),
+		"transcription_locale":          dsString("Transcription locale."),
+		"transcription_format":          dsString("Transcription format (`text` or `html`)."),
+		"transcription_redaction":       dsBool("Transcript redaction enabled."),
+		"transcription_summary":         dsBool("Transcript summary enabled."),
+		"transcription_sentiment":       dsBool("Transcript sentiment analysis enabled."),
 	}
 }
 

@@ -67,7 +67,7 @@ resource "voipms_did" "home" {
 - `pop` (Number) Point-of-presence id. Prefer `data.voipms_server` (look up by `hostname` or `name`) rather than a raw POP number.
 - `pop_hostname` (String) POP as a SIP hostname (`newyork7.voip.ms`) or display name (`New York 7`). Prefer `data.voipms_server.this.hostname` after a hostname lookup. Resolved to `pop` when applying.
 - `record_calls` (Boolean) Record inbound calls.
-- `routing` (String) Inbound route. Set from a resource or data source `route` (`voipms_subaccount.this.route`, `voipms_voicemail.this.route`, `voipms_forwarding.this.route`) or a system action such as `sys:hangup`. Do not paste a raw API id or a display name (`vm:Alex`).
+- `routing` (String) Inbound route. Set from a resource or data source `route` (`voipms_subaccount.this.route`, `voipms_voicemail.this.route`, `voipms_forwarding.this.route`, `voipms_ring_group.this.route`, `voipms_time_condition.this.route`) or a system action such as `sys:hangup`. Do not paste a raw API id or a display name (`vm:Alex`).
 - `sms_email` (String) Email address for inbound SMS.
 - `sms_email_enabled` (Boolean) Deliver inbound SMS to `sms_email`.
 - `sms_enabled` (Boolean) Enable SMS/MMS on the DID (`setSMS`).

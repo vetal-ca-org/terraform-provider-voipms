@@ -47,7 +47,13 @@ resource "voipms_voicemail" "main" {
 - `say_time` (Boolean) Announce the message time.
 - `skip_password` (Boolean) Skip the PIN prompt when checking voicemail from a trusted DID.
 - `timezone` (String) Timezone (e.g. `America/Montreal`).
-- `unavailable_message_recording` (String) Unavailable greeting recording id.
+- `transcription` (Boolean) Transcribe voicemail messages. Billed per minute by VoIP.ms.
+- `transcription_format` (String) Transcription format (`text` or `html`).
+- `transcription_locale` (String) Transcription locale (values from `getLocales`), comma-separated for up to 10.
+- `transcription_redaction` (Boolean) Redact sensitive data in the transcript.
+- `transcription_sentiment` (Boolean) Add sentiment analysis to the transcript. Billed per minute.
+- `transcription_summary` (Boolean) Add a summary to the transcript. Billed per minute.
+- `unavailable_message_recording` (String) Unavailable greeting recording id. Set from `data.voipms_recording.this.id`.
 
 ### Read-Only
 

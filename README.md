@@ -25,9 +25,12 @@ Objects listed in `docs/provider-roadmap.md` are covered: a **resource** to crea
 | Resource / data / list | `voipms_caller_id_filter` / `voipms_caller_id_filters` | `getCallerIDFiltering` / `setCallerIDFiltering` / `delCallerIDFiltering` | Spam / CID rules |
 | Resource / data / list | `voipms_phonebook_entry` / `voipms_phonebook_entries` | `getPhonebook` / `setPhonebook` / `delPhonebook` | Phonebook entries |
 | Resource / data / list | `voipms_phonebook_group` / `voipms_phonebook_groups` | `getPhonebookGroups` / `setPhonebookGroup` / `delPhonebookGroup` | Phonebook groups |
+| Resource / data / list | `voipms_ring_group` / `voipms_ring_groups` | `getRingGroups` / `setRingGroup` / `delRingGroup` | Ring groups (`grp:` targets) |
+| Resource / data / list | `voipms_time_condition` / `voipms_time_conditions` | `getTimeConditions` / `setTimeCondition` / `delTimeCondition` | Time conditions (`tc:` targets) |
+| Data / list | `voipms_recording` / `voipms_recordings` | `getRecordings` | Portal-uploaded prompts (read-only) |
 | Data / list | `voipms_server` / `voipms_servers` | `getServersInfo` | POP id / hostname / name (e.g. `newyork7.voip.ms`) |
 
-IVRs, ring groups, queues, time conditions, DISA, SIP URIs, recordings, call hunting, conferences, and reseller clients are not implemented.
+IVRs, queues, DISA, SIP URIs, call hunting, conferences, and reseller clients are not implemented.
 
 ## How it fits together
 
