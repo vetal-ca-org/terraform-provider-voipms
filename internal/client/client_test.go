@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -217,6 +218,9 @@ func TestNewDefaults(t *testing.T) {
 	if c.userAgent == "" {
 		t.Fatal("userAgent is empty")
 	}
+	if c.httpClient.Timeout != 60*time.Second {
+		t.Errorf("timeout = %s, want 60s", c.httpClient.Timeout)
+	}
 }
 
 func TestFlexStringUnmarshal(t *testing.T) {
@@ -276,8 +280,8 @@ func TestGetSubAccountByLogin(t *testing.T) {
 		if r.URL.Query().Get("method") != "getSubAccounts" {
 			t.Errorf("method = %q", r.URL.Query().Get("method"))
 		}
-		if r.URL.Query().Get("account") != "100001_gateway" {
-			t.Errorf("account = %q", r.URL.Query().Get("account"))
+		if got := r.URL.Query().Get("account"); got != "" {
+			t.Errorf("account filter = %q, want unfiltered", got)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "success",
@@ -306,22 +310,16 @@ func TestGetSubAccountByNumericID(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
 		calls++
 		account := r.URL.Query().Get("account")
-		switch account {
-		case "2001":
-			// VoIP.ms rejects numeric id filters.
-			_ = json.NewEncoder(w).Encode(map[string]string{"status": "no_subaccount"})
-		case "":
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"status": "success",
-				"accounts": []map[string]any{
-					{"id": "2001", "account": "100001_gateway", "username": "gateway"},
-					{"id": "2002", "account": "100001_other", "username": "other"},
-				},
-			})
-		default:
-			t.Errorf("unexpected account filter %q", account)
-			_ = json.NewEncoder(w).Encode(map[string]string{"status": "no_subaccount"})
+		if account != "" {
+			t.Errorf("account filter = %q, want unfiltered", account)
 		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status": "success",
+			"accounts": []map[string]any{
+				{"id": "2001", "account": "100001_gateway", "username": "gateway"},
+				{"id": "2002", "account": "100001_other", "username": "other"},
+			},
+		})
 	})
 
 	got, err := c.GetSubAccount(context.Background(), "2001")
@@ -331,8 +329,10 @@ func TestGetSubAccountByNumericID(t *testing.T) {
 	if got.ID.String() != "2001" || got.Username.String() != "gateway" {
 		t.Errorf("got id=%s username=%s", got.ID, got.Username)
 	}
-	if calls != 2 {
-		t.Errorf("calls = %d, want 2 (filtered miss + full list)", calls)
+	// Used to cost two requests: a filtered miss, then the full list. VoIP.ms
+	// rejects numeric id filters, so the filtered call was always wasted.
+	if calls != 1 {
+		t.Errorf("calls = %d, want 1 (one cached list)", calls)
 	}
 }
 
@@ -352,8 +352,8 @@ func TestGetDIDsInfoMixedTypes(t *testing.T) {
 	t.Parallel()
 
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("did") != "5550001001" {
-			t.Errorf("did = %q", r.URL.Query().Get("did"))
+		if got := r.URL.Query().Get("did"); got != "" {
+			t.Errorf("did filter = %q, want unfiltered", got)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "success",
@@ -423,8 +423,8 @@ func TestGetVoicemail(t *testing.T) {
 	t.Parallel()
 
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("mailbox") != "101" {
-			t.Errorf("mailbox = %q", r.URL.Query().Get("mailbox"))
+		if got := r.URL.Query().Get("mailbox"); got != "" {
+			t.Errorf("mailbox filter = %q, want unfiltered", got)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "success",
@@ -522,6 +522,29 @@ func TestMatchNamedObjects(t *testing.T) {
 	grp, err := MatchPhonebookGroup(grps, "Spam")
 	if err != nil || grp.PhonebookGroup.String() != "5001" {
 		t.Fatalf("MatchPhonebookGroup: %v %+v", err, grp)
+	}
+
+	recs := []Recording{{Recording: "7567", Description: "Main Greeting"}}
+	for _, query := range []string{"7567", "Main Greeting", "main-greeting"} {
+		rec, err := MatchRecording(recs, query)
+		if err != nil || rec.Recording.String() != "7567" {
+			t.Errorf("MatchRecording(%q): %v %+v", query, err, rec)
+		}
+	}
+	if _, err := MatchRecording(recs, "missing"); err == nil {
+		t.Error("MatchRecording should reject an unknown description")
+	}
+
+	rings := []RingGroup{{RingGroup: "900001", Name: "Sales"}}
+	ring, err := MatchRingGroup(rings, "Sales")
+	if err != nil || ring.RingGroup.String() != "900001" {
+		t.Fatalf("MatchRingGroup: %v %+v", err, ring)
+	}
+
+	conds := []TimeCondition{{TimeCondition: "1830", Name: "Office Hours"}}
+	cond, err := MatchTimeCondition(conds, "office-hours")
+	if err != nil || cond.TimeCondition.String() != "1830" {
+		t.Fatalf("MatchTimeCondition: %v %+v", err, cond)
 	}
 }
 
@@ -714,13 +737,21 @@ func TestRouteFormat(t *testing.T) {
 	if got := VoicemailRoute("101"); got != "vm:101" {
 		t.Errorf("VoicemailRoute = %q", got)
 	}
+	if got := RingGroupRoute("900001"); got != "grp:900001" {
+		t.Errorf("RingGroupRoute = %q", got)
+	}
+	if got := TimeConditionRoute("1830"); got != "tc:1830" {
+		t.Errorf("TimeConditionRoute = %q", got)
+	}
 }
 
 func TestCanonicalRoute(t *testing.T) {
 	t.Parallel()
 	tables := RouteTables{
-		Forwardings: []Forwarding{{Forwarding: "186772", Description: "Kate Fizz Cell"}},
-		Voicemails:  []Voicemail{{Mailbox: "500601", Name: "Main"}},
+		Forwardings:    []Forwarding{{Forwarding: "186772", Description: "Kate Fizz Cell"}},
+		Voicemails:     []Voicemail{{Mailbox: "500601", Name: "Main"}},
+		TimeConditions: []TimeCondition{{TimeCondition: "1830", Name: "Office Hours"}},
+		RingGroups:     []RingGroup{{RingGroup: "900001", Name: "Sales"}},
 	}
 	cases := []struct {
 		in, want string
@@ -731,6 +762,11 @@ func TestCanonicalRoute(t *testing.T) {
 		{"vm:500601", "vm:500601"},
 		{"vm:Main", "vm:500601"},
 		{"vm:main", "vm:500601"},
+		{"tc:1830", "tc:1830"},
+		{"tc:Office Hours", "tc:1830"},
+		{"tc:office-hours", "tc:1830"},
+		{"grp:900001", "grp:900001"},
+		{"grp:Sales", "grp:900001"},
 		{"account:150060_common-fs", "account:150060_common-fs"},
 		{"sys:hangup", "sys:hangup"},
 		{"none:", "none:"},
@@ -750,5 +786,102 @@ func TestCanonicalRoute(t *testing.T) {
 	}
 	if _, err := CanonicalRoute("fwd:missing", tables); err == nil {
 		t.Error("expected error for unknown forwarding")
+	}
+	if _, err := CanonicalRoute("tc:missing", tables); err == nil {
+		t.Error("expected error for unknown time condition")
+	}
+}
+
+func TestGetRecordings(t *testing.T) {
+	t.Parallel()
+
+	calls := 0
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if got := r.URL.Query().Get("recording"); got != "" {
+			t.Errorf("GetRecordings should list all recordings, got recording=%q", got)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status": "success",
+			"recordings": []map[string]any{
+				{"value": "7567", "description": "Main Greeting"},
+				{"value": "7568", "description": "After Hours"},
+			},
+		})
+	})
+	got, err := c.GetRecording(context.Background(), "7568")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Description.String() != "After Hours" {
+		t.Errorf("description = %q", got.Description)
+	}
+	if _, err := c.FindRecording(context.Background(), "Main Greeting"); err != nil {
+		t.Errorf("FindRecording by description: %v", err)
+	}
+	if calls != 1 {
+		t.Errorf("made %d requests, want 1 from the cached list", calls)
+	}
+	if _, err := c.GetRecording(context.Background(), "999"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("missing recording error = %v, want ErrNotFound", err)
+	}
+}
+
+func TestRedactRequestErrorDropsCredentials(t *testing.T) {
+	raw := &url.Error{
+		Op:  "Get",
+		URL: "https://voip.ms/api/v1/rest.php?api_password=hunter2&api_username=me%40example.com&method=setVoicemail",
+		Err: context.DeadlineExceeded,
+	}
+	got := redactRequestError(raw).Error()
+	for _, secret := range []string{"hunter2", "api_password", "me%40example.com"} {
+		if strings.Contains(got, secret) {
+			t.Errorf("redacted error still contains %q: %s", secret, got)
+		}
+	}
+	if !strings.Contains(got, "https://voip.ms/api/v1/rest.php") {
+		t.Errorf("redacted error lost the endpoint: %s", got)
+	}
+	if !errors.Is(redactRequestError(raw), context.DeadlineExceeded) {
+		t.Error("redaction broke errors.Is on the wrapped cause")
+	}
+	plain := errors.New("boom")
+	if redactRequestError(plain) != plain {
+		t.Error("non-url errors should pass through unchanged")
+	}
+}
+
+func TestListsAreCachedPerRunAndDroppedOnWrite(t *testing.T) {
+	var calls int
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("method") == "getVoicemails" {
+			calls++
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":     "success",
+			"voicemails": []map[string]any{{"mailbox": "101", "name": "Main"}},
+		})
+	})
+	ctx := context.Background()
+
+	for i := 0; i < 4; i++ {
+		if _, err := c.GetVoicemail(ctx, "101"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("calls = %d after 4 reads, want 1", calls)
+	}
+
+	// A write makes the cache stale; reading the pre-write value back is what
+	// Terraform reports as "provider produced inconsistent result".
+	if err := c.UpdateVoicemail(ctx, map[string]string{"mailbox": "101"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.GetVoicemail(ctx, "101"); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 {
+		t.Errorf("calls = %d after a write, want 2 (cache dropped)", calls)
 	}
 }

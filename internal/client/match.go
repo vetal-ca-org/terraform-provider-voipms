@@ -63,6 +63,28 @@ func MatchForwarding(items []Forwarding, query string) (*Forwarding, error) {
 	})
 }
 
+// MatchRingGroup finds a ring group by id, name, or name slug (`sales-line`).
+func MatchRingGroup(items []RingGroup, query string) (*RingGroup, error) {
+	return matchUnique(items, query, "ring group", func(g *RingGroup) []string {
+		return keysWithSlug(g.RingGroup.String(), g.Name.String())
+	})
+}
+
+// MatchTimeCondition finds a time condition by id, name, or name slug (`office-hours`).
+func MatchTimeCondition(items []TimeCondition, query string) (*TimeCondition, error) {
+	return matchUnique(items, query, "time condition", func(t *TimeCondition) []string {
+		return keysWithSlug(t.TimeCondition.String(), t.Name.String())
+	})
+}
+
+// MatchRecording finds a recording by id, description, or description slug
+// (`main-greeting`).
+func MatchRecording(items []Recording, query string) (*Recording, error) {
+	return matchUnique(items, query, "recording", func(r *Recording) []string {
+		return keysWithSlug(r.Recording.String(), r.Description.String())
+	})
+}
+
 // MatchCallback finds a callback by id or description.
 func MatchCallback(items []Callback, query string) (*Callback, error) {
 	return matchUnique(items, query, "callback", func(c *Callback) []string {

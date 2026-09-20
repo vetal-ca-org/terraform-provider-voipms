@@ -42,6 +42,12 @@ type voicemailModel struct {
 	Language                    types.String `tfsdk:"language"`
 	EmailAttachmentFormat       types.String `tfsdk:"email_attachment_format"`
 	UnavailableMessageRecording types.String `tfsdk:"unavailable_message_recording"`
+	Transcription               types.Bool   `tfsdk:"transcription"`
+	TranscriptionLocale         types.String `tfsdk:"transcription_locale"`
+	TranscriptionFormat         types.String `tfsdk:"transcription_format"`
+	TranscriptionRedaction      types.Bool   `tfsdk:"transcription_redaction"`
+	TranscriptionSummary        types.Bool   `tfsdk:"transcription_summary"`
+	TranscriptionSentiment      types.Bool   `tfsdk:"transcription_sentiment"`
 }
 
 func (r *voicemailResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -77,7 +83,13 @@ func (r *voicemailResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"play_instructions":             optStr("When to play mailbox instructions. Use `unread` (API `u`) or `skip_unread` (API `su`). Short codes still work."),
 			"language":                      optStr("Prompt language (e.g. `en`)."),
 			"email_attachment_format":       optStr("Attachment format (e.g. `wav49`)."),
-			"unavailable_message_recording": optStr("Unavailable greeting recording id."),
+			"unavailable_message_recording": optStr("Unavailable greeting recording id. Set from `data.voipms_recording.this.id`."),
+			"transcription":                 optBoolAttr("Transcribe voicemail messages. Billed per minute by VoIP.ms."),
+			"transcription_locale":          optStr("Transcription locale (values from `getLocales`), comma-separated for up to 10."),
+			"transcription_format":          optStr("Transcription format (`text` or `html`)."),
+			"transcription_redaction":       optBoolAttr("Redact sensitive data in the transcript."),
+			"transcription_summary":         optBoolAttr("Add a summary to the transcript. Billed per minute."),
+			"transcription_sentiment":       optBoolAttr("Add sentiment analysis to the transcript. Billed per minute."),
 		},
 	}
 }
@@ -184,6 +196,12 @@ func voicemailWriteParams(m voicemailModel) map[string]string {
 	setString(params, "language", m.Language)
 	setString(params, "email_attachment_format", m.EmailAttachmentFormat)
 	setString(params, "unavailable_message_recording", m.UnavailableMessageRecording)
+	setBoolYesNo(params, "transcription", m.Transcription)
+	setString(params, "transcription_locale", m.TranscriptionLocale)
+	setString(params, "transcription_format", m.TranscriptionFormat)
+	setBoolYesNo(params, "transcription_redaction", m.TranscriptionRedaction)
+	setBoolYesNo(params, "transcription_summary", m.TranscriptionSummary)
+	setBoolYesNo(params, "transcription_sentiment", m.TranscriptionSentiment)
 	return params
 }
 
@@ -228,6 +246,12 @@ func flattenVoicemail(src *client.Voicemail, dst *voicemailModel) {
 	dst.Language = strVal(src.Language)
 	dst.EmailAttachmentFormat = strVal(src.EmailAttachmentFormat)
 	dst.UnavailableMessageRecording = strVal(src.UnavailableMessageRecording)
+	dst.Transcription = boolVal(src.Transcription)
+	dst.TranscriptionLocale = strVal(src.TranscriptionLocale)
+	dst.TranscriptionFormat = strVal(src.TranscriptionFormat)
+	dst.TranscriptionRedaction = boolVal(src.TranscriptionRedaction)
+	dst.TranscriptionSummary = boolVal(src.TranscriptionSummary)
+	dst.TranscriptionSentiment = boolVal(src.TranscriptionSentiment)
 }
 
 func flattenVoicemailCopy(src *client.Voicemail) voicemailModel {

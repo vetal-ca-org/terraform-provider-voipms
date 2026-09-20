@@ -127,6 +127,8 @@ func (p *voipmsProvider) Resources(_ context.Context) []func() resource.Resource
 		NewCallerIDFilterResource,
 		NewPhonebookEntryResource,
 		NewPhonebookGroupResource,
+		NewRingGroupResource,
+		NewTimeConditionResource,
 	}
 }
 
@@ -151,6 +153,12 @@ func (p *voipmsProvider) DataSources(_ context.Context) []func() datasource.Data
 		NewPhonebookGroupsDataSource,
 		NewServerDataSource,
 		NewServersDataSource,
+		NewRingGroupDataSource,
+		NewRingGroupsDataSource,
+		NewTimeConditionDataSource,
+		NewTimeConditionsDataSource,
+		NewRecordingDataSource,
+		NewRecordingsDataSource,
 	}
 }
 

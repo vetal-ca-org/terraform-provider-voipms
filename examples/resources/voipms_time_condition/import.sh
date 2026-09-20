@@ -1,0 +1,1 @@
+terraform import voipms_time_condition.office_hours 1830

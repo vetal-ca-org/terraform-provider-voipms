@@ -65,7 +65,7 @@ func (c *Client) SetPhonebook(ctx context.Context, params map[string]string) err
 
 // DeletePhonebook deletes a phonebook entry by id.
 func (c *Client) DeletePhonebook(ctx context.Context, id string) error {
-	return c.Call(ctx, "delPhonebook", map[string]string{"phonebook": id}, nil)
+	return c.CallWrite(ctx, "delPhonebook", map[string]string{"phonebook": id}, nil)
 }
 
 // GetPhonebookGroups lists phonebook groups. id, if set, filters to one group.
@@ -118,5 +118,5 @@ func (c *Client) SetPhonebookGroup(ctx context.Context, params map[string]string
 
 // DeletePhonebookGroup deletes a group by id.
 func (c *Client) DeletePhonebookGroup(ctx context.Context, id string) error {
-	return c.Call(ctx, "delPhonebookGroup", map[string]string{"group": id}, nil)
+	return c.CallWrite(ctx, "delPhonebookGroup", map[string]string{"group": id}, nil)
 }

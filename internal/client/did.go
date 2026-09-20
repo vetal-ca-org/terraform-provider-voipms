@@ -12,19 +12,20 @@ type didsResponse struct {
 
 // GetDIDsInfo lists DIDs. did, if set, filters to one number.
 func (c *Client) GetDIDsInfo(ctx context.Context, did string) ([]DID, error) {
-	params := map[string]string{}
-	if did != "" {
-		params["did"] = did
-	}
-	var resp didsResponse
-	err := c.Call(ctx, "getDIDsInfo", params, &resp)
-	if err != nil {
-		if emptyResult(err) {
-			return []DID{}, nil
+	items, err := c.cachedDIDs(func() ([]DID, error) {
+		var resp didsResponse
+		if err := c.Call(ctx, "getDIDsInfo", map[string]string{}, &resp); err != nil {
+			if emptyResult(err) {
+				return []DID{}, nil
+			}
+			return nil, err
 		}
-		return nil, err
+		return resp.DIDs, nil
+	})
+	if err != nil || did == "" {
+		return items, err
 	}
-	return resp.DIDs, nil
+	return filterList(items, func(x *DID) bool { return x.DID.String() == did }), nil
 }
 
 // GetDID returns one DID by number.

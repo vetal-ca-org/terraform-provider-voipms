@@ -104,7 +104,7 @@ func didResourceAttributes() map[string]schema.Attribute {
 			},
 		},
 		"description":              schema.StringAttribute{MarkdownDescription: "Rate-center / city description from VoIP.ms (read-only).", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-		"routing":                  optStr("Inbound route. Set from a resource or data source `route` (`voipms_subaccount.this.route`, `voipms_voicemail.this.route`, `voipms_forwarding.this.route`) or a system action such as `sys:hangup`. Do not paste a raw API id or a display name (`vm:Alex`)."),
+		"routing":                  optStr("Inbound route. Set from a resource or data source `route` (`voipms_subaccount.this.route`, `voipms_voicemail.this.route`, `voipms_forwarding.this.route`, `voipms_ring_group.this.route`, `voipms_time_condition.this.route`) or a system action such as `sys:hangup`. Do not paste a raw API id or a display name (`vm:Alex`)."),
 		"failover_busy":            optStr("Busy failover route. Same `route` reference as `routing`."),
 		"failover_unreachable":     optStr("Unreachable failover route. Same `route` reference as `routing`."),
 		"failover_noanswer":        optStr("No-answer failover route. Same `route` reference as `routing`."),
@@ -347,7 +347,17 @@ func (r *didResource) routeTables(ctx context.Context) (client.RouteTables, erro
 			r.routesErr = err
 			return
 		}
-		r.routes = client.RouteTables{Forwardings: fwds, Voicemails: vms}
+		groups, err := r.client.GetRingGroups(ctx, "")
+		if err != nil {
+			r.routesErr = err
+			return
+		}
+		conds, err := r.client.GetTimeConditions(ctx, "")
+		if err != nil {
+			r.routesErr = err
+			return
+		}
+		r.routes = client.RouteTables{Forwardings: fwds, Voicemails: vms, RingGroups: groups, TimeConditions: conds}
 	})
 	return r.routes, r.routesErr
 }
