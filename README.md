@@ -4,7 +4,7 @@ Terraform provider for [VoIP.ms](https://voip.ms). It talks to the public REST/J
 
 This repository follows the HashiCorp naming convention (`terraform-provider-voipms`). `master` is the default branch. See `docs/provider-roadmap.md` for API coverage.
 
-Published at [registry.terraform.io/providers/vetal-ca-org/voipms](https://registry.terraform.io/providers/vetal-ca-org/voipms):
+Published at [registry.terraform.io/providers/vetal-ca-org/voipms](https://registry.terraform.io/providers/vetal-ca-org/voipms) and [search.opentofu.org/provider/vetal-ca-org/voipms](https://search.opentofu.org/provider/vetal-ca-org/voipms/latest):
 
 ```hcl
 source = "vetal-ca-org/voipms"
@@ -57,7 +57,7 @@ https://voip.ms/api/v1/rest.php?api_username=…&api_password=…&method=…
 
 ## Requirements
 
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0 or [OpenTofu](https://opentofu.org) >= 1.6
 - [Go](https://go.dev/dl/) >= 1.25.8 (to build from source)
 
 ## Build and install locally
@@ -70,7 +70,7 @@ make install
 
 `make install` builds `terraform-provider-voipms` and copies it to `$(go env GOPATH)/bin`.
 
-Terraform will not see a locally built provider unless you override provider installation. Copy `terraformrc.example` to `~/.terraformrc` (or set `TF_CLI_CONFIG_FILE`) and point the path at that `bin` directory:
+Terraform will not see a locally built provider unless you override provider installation. Copy `terraformrc.example` to `~/.terraformrc` (OpenTofu: `~/.tofurc`) or set `TF_CLI_CONFIG_FILE`, and point the path at that `bin` directory:
 
 ```hcl
 provider_installation {
@@ -135,9 +135,11 @@ make install-plugin          # version 0.0.1-dev by default
 # VERSION=0.1.0 make install-plugin
 ```
 
-That writes:
+That writes the same binary under both registry hostnames Terraform and OpenTofu look up:
 
 `~/.terraform.d/plugins/registry.terraform.io/vetal-ca-org/voipms/0.0.1-dev/<os>_<arch>/terraform-provider-voipms_v0.0.1-dev`
+
+`~/.terraform.d/plugins/registry.opentofu.org/vetal-ca-org/voipms/0.0.1-dev/<os>_<arch>/terraform-provider-voipms_v0.0.1-dev`
 
 In the other repo pin the version:
 
@@ -152,7 +154,7 @@ terraform {
 }
 ```
 
-Then `terraform init` and `terraform plan`. Copy the same plugin directory onto any other machine that should run that config.
+Then `terraform init` / `tofu init` and plan. Copy the same plugin directory onto any other machine that should run that config.
 
 ## Example
 
@@ -276,9 +278,9 @@ make generate
 
 That runs [`tfplugindocs`](https://github.com/hashicorp/terraform-plugin-docs).
 
-## Releasing (Terraform Registry)
+## Releasing (Terraform Registry and OpenTofu Registry)
 
-Source address is `vetal-ca-org/voipms`. After the first publish, **do not click Publish again**. A new signed GitHub Release is enough.
+Source address is `vetal-ca-org/voipms` for both CLIs. After the first listing on each registry, **do not click Publish again**. A new signed GitHub Release is enough; the Release workflow waits for both registries in parallel.
 
 1. Merge to `master` through a pull request. Tests must be green.
 2. Tag the next semver. Never reuse or move an existing tag.
@@ -290,12 +292,12 @@ Source address is `vetal-ca-org/voipms`. After the first publish, **do not click
    git push origin v0.1.1
    ```
 
-3. GitHub Actions **Release** runs GoReleaser: platform zips, SHA256SUMS, GPG-signed checksums (`GPG_PRIVATE_KEY` / `PASSPHRASE` secrets).
-4. The Registry ingests that release automatically. Confirm the new version on [the provider page](https://registry.terraform.io/providers/vetal-ca-org/voipms).
+3. GitHub Actions **Release** runs GoReleaser (platform zips, SHA256SUMS, GPG-signed checksums via `GPG_PRIVATE_KEY` / `PASSPHRASE`), then concurrently waits until Terraform Registry and OpenTofu Registry list the version.
+4. Confirm the version on [Terraform Registry](https://registry.terraform.io/providers/vetal-ca-org/voipms) and [OpenTofu Registry](https://search.opentofu.org/provider/vetal-ca-org/voipms/latest).
 
-Do not replace assets on a published release. To rotate signing keys, **add** a new public key on the `vetal-ca-org` namespace and update the Actions secrets; leave the old key so older versions still verify.
+OpenTofu listing is a one-time browser submission (their automation ignores `gh` / API issues). Details: [`docs/guides/releasing.md`](docs/guides/releasing.md).
 
-Full write-up: [`docs/guides/releasing.md`](docs/guides/releasing.md) (also a Guide on the Registry after the next tagged release).
+Do not replace assets on a published release. To rotate signing keys, **add** a new public key on the `vetal-ca-org` namespace and update the Actions secrets; leave the old key so older versions still verify. Submit the new public key to OpenTofu the same way as the first key.
 
 In another repo:
 
@@ -310,7 +312,7 @@ terraform {
 }
 ```
 
-`terraform init` downloads the binary. Use `dev_overrides` or `make install-plugin` only while developing this provider.
+`terraform init` or `tofu init` downloads the binary. Use `dev_overrides` or `make install-plugin` only while developing this provider.
 
 ## License
 

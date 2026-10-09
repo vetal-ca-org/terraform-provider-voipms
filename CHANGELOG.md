@@ -6,6 +6,8 @@ All notable changes to this provider will be documented in this file.
 
 ### Added
 
+- Release workflow waits for Terraform Registry and OpenTofu Registry in parallel after GoReleaser. The same GitHub Release is the publish artifact for both.
+
 - `voipms_ring_group` resource and data sources. Point a DID at a group with `routing = voipms_ring_group.this.route` (`grp:{id}`).
 - `voipms_time_condition` resource and data sources. Point a DID at a schedule with `routing = voipms_time_condition.this.route` (`tc:{id}`).
 - `voipms_recording` / `voipms_recordings` data sources for portal-uploaded prompts (`getRecordings`). Use the id for `voipms_voicemail.unavailable_message_recording` and `voipms_ring_group.caller_announcement`.

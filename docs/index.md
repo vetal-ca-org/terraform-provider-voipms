@@ -6,7 +6,7 @@ description: |-
 
 # VoIP.ms Provider
 
-Use this provider to read and manage objects in a [VoIP.ms](https://voip.ms) account through the REST/JSON API.
+Use this provider to read and manage objects in a [VoIP.ms](https://voip.ms) account through the REST/JSON API. Works with Terraform and OpenTofu (`source = "vetal-ca-org/voipms"`).
 
 Manage [VoIP.ms](https://voip.ms) accounts through the REST/JSON API. Authenticate with an API username (account email) and a dedicated API password from the SOAP & REST/JSON API page. The public IP of the machine running Terraform must also be allow-listed there.
 

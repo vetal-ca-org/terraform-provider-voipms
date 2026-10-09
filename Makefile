@@ -2,7 +2,10 @@ HOSTNAME := terraform-provider-voipms
 VERSION ?= 0.0.1-dev
 OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH)
 GOBIN := $(shell go env GOPATH)/bin
-PLUGIN_MIRROR := $(HOME)/.terraform.d/plugins/registry.terraform.io/vetal-ca-org/voipms/$(VERSION)/$(OS_ARCH)
+PLUGIN_ROOT := $(HOME)/.terraform.d/plugins
+PLUGIN_MIRRORS := \
+	$(PLUGIN_ROOT)/registry.terraform.io/vetal-ca-org/voipms/$(VERSION)/$(OS_ARCH) \
+	$(PLUGIN_ROOT)/registry.opentofu.org/vetal-ca-org/voipms/$(VERSION)/$(OS_ARCH)
 
 default: fmt test
 
@@ -13,12 +16,14 @@ install: build
 	mkdir -p "$(GOBIN)"
 	cp $(HOSTNAME) "$(GOBIN)/$(HOSTNAME)"
 
-# Install a versioned binary Terraform can find from another repo without
-# Terraform Registry (filesystem mirror). Pin version = "0.0.1-dev" there.
+# Install a versioned binary Terraform and OpenTofu can find from another repo
+# without a registry download (filesystem mirror). Pin version = "0.0.1-dev".
 install-plugin: build
-	mkdir -p "$(PLUGIN_MIRROR)"
-	cp $(HOSTNAME) "$(PLUGIN_MIRROR)/$(HOSTNAME)_v$(VERSION)"
-	@echo "Installed $(PLUGIN_MIRROR)/$(HOSTNAME)_v$(VERSION)"
+	@for d in $(PLUGIN_MIRRORS); do \
+		mkdir -p "$$d"; \
+		cp $(HOSTNAME) "$$d/$(HOSTNAME)_v$(VERSION)"; \
+		echo "Installed $$d/$(HOSTNAME)_v$(VERSION)"; \
+	done
 
 fmt:
 	gofmt -s -w -e .

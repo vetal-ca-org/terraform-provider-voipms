@@ -1,5 +1,7 @@
-# Terraform Provider release workflow.
-# Creates a GitHub Release when a tag matching v* is pushed (for example v0.1.0).
+# Provider release workflow.
+# A v* tag runs GoReleaser (GitHub Release). Terraform Registry and OpenTofu
+# Registry both ingest that release; the registry jobs wait in parallel until
+# each listing shows the new version.
 name: Release
 
 on:
@@ -34,3 +36,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+
+  registry:
+    name: ${{ matrix.name }} Registry
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout_minutes }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Terraform
+            versions_url: https://registry.terraform.io/v1/providers/vetal-ca-org/voipms/versions
+            timeout_minutes: 20
+          - name: OpenTofu
+            versions_url: https://registry.opentofu.org/v1/providers/vetal-ca-org/voipms/versions
+            timeout_minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Wait until ${{ matrix.name }} Registry lists this version
+        run: |
+          scripts/wait-for-registry.sh \
+            "${{ matrix.name }}" \
+            "${{ matrix.versions_url }}" \
+            "${GITHUB_REF_NAME}" \
+            "$(( ${{ matrix.timeout_minutes }} * 60 - 60 ))"
