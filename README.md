@@ -10,6 +10,8 @@ Published at [registry.terraform.io/providers/vetal-ca-org/voipms](https://regis
 source = "vetal-ca-org/voipms"
 ```
 
+Ring groups, time conditions, recording data sources, complete `set*` field round-trips, dropping list caches on write, and keeping the API password out of HTTP errors were ported from [maneyko/terraform-provider-voipms](https://github.com/maneyko/terraform-provider-voipms) (MPL-2.0).
+
 ## What works today
 
 Objects listed in `docs/provider-roadmap.md` are covered: a **resource** to create/update, a **data source** to read one object, and a **list data source** to read all of them.
