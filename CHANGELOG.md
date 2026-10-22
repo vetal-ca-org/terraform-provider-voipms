@@ -38,6 +38,7 @@ All notable changes to this provider will be documented in this file.
 
 ### Fixed
 
+- `voipms_did.sms_sipaccount`: VoIP.ms stores "none" as `""` and accepts `"0"` on write. iNUM (no SMS) always reads back empty. Config `"0"` no longer fails apply (`inconsistent result after apply`) or plans forever.
 - REST client errors no longer include `api_password` (or the rest of the query string) when an HTTP request fails.
 - List caches are dropped after every write, including deletes and timed-out writes, so the next read does not return the pre-write value.
 - `setVoicemail` / `setSubAccount` / `setDIDInfo` round-trip fields the API returns but Terraform does not model (`transcription_*`, `parking_lot`, `tfcarrier`, `internal_extension_location`, `transcription_start_delay`, `port_out_pin`, `inbound_dialing_mode`). Updating one attribute no longer silently resets those.

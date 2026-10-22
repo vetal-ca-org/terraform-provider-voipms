@@ -81,6 +81,23 @@ func keepNamed(plan *types.String, state types.String, code client.NamedCode) {
 	}
 }
 
+// VoIP.ms stores "no SIP SMS account" as "" and accepts "0" on write.
+// iNUM DIDs have no SMS; getDIDsInfo always returns "". Config that sends
+// "0" (Terraform optional default) must not fail apply or drift forever.
+func smsAccountNone(v types.String) bool {
+	if v.IsNull() || v.IsUnknown() {
+		return true
+	}
+	s := strings.TrimSpace(v.ValueString())
+	return s == "" || s == "0"
+}
+
+func keepSMSAccountNone(got *types.String, prior types.String) {
+	if smsAccountNone(*got) && smsAccountNone(prior) {
+		*got = prior
+	}
+}
+
 func setBool01(params map[string]string, key string, v types.Bool) {
 	if v.IsNull() || v.IsUnknown() {
 		return

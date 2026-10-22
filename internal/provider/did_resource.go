@@ -135,7 +135,7 @@ func didResourceAttributes() map[string]schema.Attribute {
 		"webhook":                  optStr("Modern SMS webhook URL."),
 		"webhook_enabled":          optBoolAttr("Enable the modern SMS webhook."),
 		"dialmode":                 schema.StringAttribute{MarkdownDescription: "SMS dialing mode.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP."),
+		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP. `0` and empty both mean none (VoIP.ms returns empty on iNUM)."),
 		"sms_sipaccount_enabled":   optBoolAttr("Enable SIP-account SMS sending."),
 	}
 }
@@ -186,7 +186,9 @@ func (r *didResource) Create(ctx context.Context, req resource.CreateRequest, re
 		resp.Diagnostics.AddError("DID updated but could not be read back", err.Error())
 		return
 	}
+	priorSMS := plan.SMSSIPAccount
 	flattenDID(got, &plan)
+	keepSMSAccountNone(&plan.SMSSIPAccount, priorSMS)
 	if err := r.keepOrFillPOPHostname(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -213,7 +215,9 @@ func (r *didResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		resp.Diagnostics.AddError("Unable to read VoIP.ms DID", err.Error())
 		return
 	}
+	priorSMS := state.SMSSIPAccount
 	flattenDID(got, &state)
+	keepSMSAccountNone(&state.SMSSIPAccount, priorSMS)
 	if err := r.keepOrFillPOPHostname(ctx, &state); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -240,7 +244,9 @@ func (r *didResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		resp.Diagnostics.AddError("DID updated but could not be read back", err.Error())
 		return
 	}
+	priorSMS := plan.SMSSIPAccount
 	flattenDID(got, &plan)
+	keepSMSAccountNone(&plan.SMSSIPAccount, priorSMS)
 	if err := r.keepOrFillPOPHostname(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -405,6 +411,7 @@ func (r *didResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReq
 	keepEquivalentRoute(&plan.FailoverUnreachable, state.FailoverUnreachable, tables)
 	keepEquivalentRoute(&plan.FailoverNoanswer, state.FailoverNoanswer, tables)
 	keepNamed(&plan.BillingType, state.BillingType, client.BillingType)
+	keepSMSAccountNone(&plan.SMSSIPAccount, state.SMSSIPAccount)
 	// Keep computed-only attributes from state so Set() does not mark them unknown.
 	plan.Description = state.Description
 	plan.E911 = state.E911
