@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -133,7 +134,7 @@ func didResourceAttributes() map[string]schema.Attribute {
 		"sms_url_callback_enabled": optBoolAttr("Enable the legacy URL callback."),
 		"sms_url_callback_retry":   optBoolAttr("Retry the legacy URL callback on failure."),
 		"webhook":                  optStr("Modern SMS webhook URL."),
-		"webhook_enabled":          optBoolAttr("Enable the modern SMS webhook."),
+		"webhook_enabled":          optBoolAttr("Enable the modern SMS webhook. `setDIDInfo` clears the tick; the provider skips that call when routing is unchanged and retries `setSMS` until `getDIDsInfo` reads true. `setSMS` writes `webhook_enable`."),
 		"dialmode":                 schema.StringAttribute{MarkdownDescription: "SMS dialing mode.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0`)."),
 		"sms_sipaccount_enabled":   optBoolAttr("Enable SIP-account SMS sending."),
@@ -187,10 +188,8 @@ func (r *didResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 	priorSMS := plan.SMSSIPAccount
-	priorWebhook := plan.WebhookEnabled
 	flattenDID(got, &plan)
 	keepSMSAccountNone(&plan.SMSSIPAccount, priorSMS)
-	keepWebhookEnabled(&plan.WebhookEnabled, priorWebhook)
 	if err := r.keepOrFillPOPHostname(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -218,10 +217,8 @@ func (r *didResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 	priorSMS := state.SMSSIPAccount
-	priorWebhook := state.WebhookEnabled
 	flattenDID(got, &state)
 	keepSMSAccountNone(&state.SMSSIPAccount, priorSMS)
-	keepWebhookEnabled(&state.WebhookEnabled, priorWebhook)
 	if err := r.keepOrFillPOPHostname(ctx, &state); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -249,10 +246,8 @@ func (r *didResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		return
 	}
 	priorSMS := plan.SMSSIPAccount
-	priorWebhook := plan.WebhookEnabled
 	flattenDID(got, &plan)
 	keepSMSAccountNone(&plan.SMSSIPAccount, priorSMS)
-	keepWebhookEnabled(&plan.WebhookEnabled, priorWebhook)
 	if err := r.keepOrFillPOPHostname(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -274,6 +269,10 @@ func (r *didResource) ImportState(ctx context.Context, req resource.ImportStateR
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
 }
 
+// webhookReadDelay sits between getDIDsInfo polls after setSMS. setDIDInfo
+// clears the tick; the API often still reads false for a couple of seconds.
+var webhookReadDelay = 2 * time.Second
+
 func (r *didResource) applyDID(ctx context.Context, plan *didModel) error {
 	if err := r.resolvePOP(ctx, plan); err != nil {
 		return err
@@ -290,23 +289,49 @@ func (r *didResource) applyDID(ctx context.Context, plan *didModel) error {
 	}
 	info := overlayParams(current.SetInfoParams(), didInfoParams(*plan))
 	info["did"] = plan.DID.ValueString()
-	if err := r.client.SetDIDInfo(ctx, info); err != nil {
-		return err
+	infoChanged := !paramsEqual(current.SetInfoParams(), info)
+	if infoChanged {
+		if err := r.client.SetDIDInfo(ctx, info); err != nil {
+			return err
+		}
 	}
 	if !current.SMSAvailable.Bool() && (current.SMSAvailable.String() == "0" || current.SMSAvailable.String() == "") {
 		return nil
 	}
 	sms := overlayParams(current.SetSMSParams(), didSMSParams(*plan))
 	sms["did"] = plan.DID.ValueString()
+	smsChanged := !paramsEqual(current.SetSMSParams(), sms)
+	// setDIDInfo clears webhook_enabled. Write SMS again even when the
+	// planned SMS fields already match the pre-write read.
+	if !infoChanged && !smsChanged {
+		return nil
+	}
 	if err := r.client.SetSMS(ctx, sms); err != nil {
 		return err
 	}
-	return r.restoreWebhookIfCleared(ctx, plan, sms)
+	return r.confirmWebhookEnabled(ctx, plan, sms)
 }
 
-func (r *didResource) restoreWebhookIfCleared(ctx context.Context, plan *didModel, sms map[string]string) error {
+func (r *didResource) confirmWebhookEnabled(ctx context.Context, plan *didModel, sms map[string]string) error {
 	if plan.WebhookEnabled.IsNull() || plan.WebhookEnabled.IsUnknown() || !plan.WebhookEnabled.ValueBool() {
 		return nil
+	}
+	for i := 0; i < 3; i++ {
+		got, err := r.client.GetDID(ctx, plan.DID.ValueString())
+		if err != nil {
+			return err
+		}
+		if got.WebhookEnabled.Bool() {
+			return nil
+		}
+		if i < 2 {
+			if err := r.client.Sleep(ctx, webhookReadDelay); err != nil {
+				return err
+			}
+		}
+	}
+	if err := r.client.SetSMS(ctx, sms); err != nil {
+		return err
 	}
 	got, err := r.client.GetDID(ctx, plan.DID.ValueString())
 	if err != nil {
@@ -315,7 +340,7 @@ func (r *didResource) restoreWebhookIfCleared(ctx context.Context, plan *didMode
 	if got.WebhookEnabled.Bool() {
 		return nil
 	}
-	return r.client.SetSMS(ctx, sms)
+	return fmt.Errorf("webhook_enabled is still false after setSMS for DID %s", plan.DID.ValueString())
 }
 
 func (r *didResource) resolvePOP(ctx context.Context, plan *didModel) error {
@@ -563,7 +588,8 @@ func didSMSParams(m didModel) map[string]string {
 	}
 	setBool01(params, "sms_sipaccount_enabled", m.SMSSIPAccountEnabled)
 	setString(params, "webhook", m.Webhook)
-	setBool01(params, "webhook_enabled", m.WebhookEnabled)
+	// getDIDsInfo returns webhook_enabled. setSMS writes webhook_enable.
+	setBool01(params, "webhook_enable", m.WebhookEnabled)
 	return params
 }
 

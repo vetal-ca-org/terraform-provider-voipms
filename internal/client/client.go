@@ -28,6 +28,10 @@ const (
 	// times out client-side may still have been applied server-side.
 	defaultTimeout     = 60 * time.Second
 	defaultMaxAttempts = 5
+	// setSMS is account-wide. A second call inside about a minute returns
+	// sms_wait_message. Household applies several DIDs in one plan.
+	defaultSMSWaitDelay = 70 * time.Second
+	defaultSMSWaitTries = 4
 )
 
 // Cloudflare / edge timeouts while voip.ms origin is slow or unreachable.
@@ -47,6 +51,8 @@ type Client struct {
 	cache        listCache
 	maxAttempts  int
 	retryBackoff func(ctx context.Context, d time.Duration) error
+	smsWaitDelay time.Duration
+	smsWaitTries int
 }
 
 // Config is used to construct a Client.
@@ -83,6 +89,8 @@ func New(cfg Config) *Client {
 		userAgent:    userAgent,
 		maxAttempts:  defaultMaxAttempts,
 		retryBackoff: sleepContext,
+		smsWaitDelay: defaultSMSWaitDelay,
+		smsWaitTries: defaultSMSWaitTries,
 	}
 }
 
@@ -169,6 +177,12 @@ func (e *APIError) EmptyResult() bool {
 func emptyResult(err error) bool {
 	var apiErr *APIError
 	return errors.As(err, &apiErr) && apiErr.EmptyResult()
+}
+
+// SMSWait reports whether the API asked the caller to wait before another setSMS.
+func SMSWait(err error) bool {
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && strings.EqualFold(apiErr.Status, "sms_wait_message")
 }
 
 // Call invokes a VoIP.ms API method and decodes the JSON body into dest.
