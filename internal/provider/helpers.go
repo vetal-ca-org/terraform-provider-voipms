@@ -81,9 +81,9 @@ func keepNamed(plan *types.String, state types.String, code client.NamedCode) {
 	}
 }
 
-// VoIP.ms stores "no SIP SMS account" as "" and accepts "0" on write.
-// iNUM DIDs have no SMS; getDIDsInfo always returns "". Config that sends
-// "0" (Terraform optional default) must not fail apply or drift forever.
+// VoIP.ms stores "no SIP SMS account" as "". Config "0" is the same on read.
+// setSMS rejects "0" (invalid_account) on SMS-capable NANP DIDs; writes send "".
+// iNUM has no SMS; getDIDsInfo always returns "".
 func smsAccountNone(v types.String) bool {
 	if v.IsNull() || v.IsUnknown() {
 		return true
@@ -94,6 +94,18 @@ func smsAccountNone(v types.String) bool {
 
 func keepSMSAccountNone(got *types.String, prior types.String) {
 	if smsAccountNone(*got) && smsAccountNone(prior) {
+		*got = prior
+	}
+}
+
+// setDIDInfo clears the modern webhook. setSMS writes webhook_enabled
+// again, but getDIDsInfo often still returns false. Keep the value we
+// sent so apply does not fail inconsistent result.
+func keepWebhookEnabled(got *types.Bool, prior types.Bool) {
+	if got.IsNull() || got.IsUnknown() || prior.IsNull() || prior.IsUnknown() {
+		return
+	}
+	if prior.ValueBool() && !got.ValueBool() {
 		*got = prior
 	}
 }

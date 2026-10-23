@@ -653,10 +653,10 @@ func TestFindHelpers(t *testing.T) {
 func TestSlug(t *testing.T) {
 	t.Parallel()
 	cases := map[string]string{
-		"Kate Fizz Cell": "kate-fizz-cell",
-		"Main":           "main",
-		"  Kate  Fizz  ": "kate-fizz",
-		"":               "",
+		"Office Front Desk": "office-front-desk",
+		"Main":              "main",
+		"  Office  Desk  ":  "office-desk",
+		"":                  "",
 	}
 	for in, want := range cases {
 		if got := Slug(in); got != want {
@@ -728,10 +728,10 @@ func TestNamedCodes(t *testing.T) {
 
 func TestRouteFormat(t *testing.T) {
 	t.Parallel()
-	if got := AccountRoute("150060_gateway"); got != "account:150060_gateway" {
+	if got := AccountRoute("100001_gateway"); got != "account:100001_gateway" {
 		t.Errorf("AccountRoute = %q", got)
 	}
-	if got := ForwardingRoute("186772"); got != "fwd:186772" {
+	if got := ForwardingRoute("16006"); got != "fwd:16006" {
 		t.Errorf("ForwardingRoute = %q", got)
 	}
 	if got := VoicemailRoute("101"); got != "vm:101" {
@@ -748,26 +748,26 @@ func TestRouteFormat(t *testing.T) {
 func TestCanonicalRoute(t *testing.T) {
 	t.Parallel()
 	tables := RouteTables{
-		Forwardings:    []Forwarding{{Forwarding: "186772", Description: "Kate Fizz Cell"}},
-		Voicemails:     []Voicemail{{Mailbox: "500601", Name: "Main"}},
+		Forwardings:    []Forwarding{{Forwarding: "16006", Description: "Office Front Desk"}},
+		Voicemails:     []Voicemail{{Mailbox: "101", Name: "Main"}},
 		TimeConditions: []TimeCondition{{TimeCondition: "1830", Name: "Office Hours"}},
 		RingGroups:     []RingGroup{{RingGroup: "900001", Name: "Sales"}},
 	}
 	cases := []struct {
 		in, want string
 	}{
-		{"fwd:186772", "fwd:186772"},
-		{"fwd:Kate Fizz Cell", "fwd:186772"},
-		{"fwd:kate-fizz-cell", "fwd:186772"},
-		{"vm:500601", "vm:500601"},
-		{"vm:Main", "vm:500601"},
-		{"vm:main", "vm:500601"},
+		{"fwd:16006", "fwd:16006"},
+		{"fwd:Office Front Desk", "fwd:16006"},
+		{"fwd:office-front-desk", "fwd:16006"},
+		{"vm:101", "vm:101"},
+		{"vm:Main", "vm:101"},
+		{"vm:main", "vm:101"},
 		{"tc:1830", "tc:1830"},
 		{"tc:Office Hours", "tc:1830"},
 		{"tc:office-hours", "tc:1830"},
 		{"grp:900001", "grp:900001"},
 		{"grp:Sales", "grp:900001"},
-		{"account:150060_common-fs", "account:150060_common-fs"},
+		{"account:100001_gateway", "account:100001_gateway"},
 		{"sys:hangup", "sys:hangup"},
 		{"none:", "none:"},
 	}
@@ -781,7 +781,7 @@ func TestCanonicalRoute(t *testing.T) {
 			t.Errorf("CanonicalRoute(%q) = %q, want %q", tc.in, got, tc.want)
 		}
 	}
-	if !RoutesEqual("fwd:Kate Fizz Cell", "fwd:186772", tables) {
+	if !RoutesEqual("fwd:Office Front Desk", "fwd:16006", tables) {
 		t.Error("named forwarding should equal id form")
 	}
 	if _, err := CanonicalRoute("fwd:missing", tables); err == nil {

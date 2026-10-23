@@ -135,7 +135,7 @@ func didResourceAttributes() map[string]schema.Attribute {
 		"webhook":                  optStr("Modern SMS webhook URL."),
 		"webhook_enabled":          optBoolAttr("Enable the modern SMS webhook."),
 		"dialmode":                 schema.StringAttribute{MarkdownDescription: "SMS dialing mode.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP. `0` and empty both mean none (VoIP.ms returns empty on iNUM)."),
+		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0`)."),
 		"sms_sipaccount_enabled":   optBoolAttr("Enable SIP-account SMS sending."),
 	}
 }
@@ -187,8 +187,10 @@ func (r *didResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 	priorSMS := plan.SMSSIPAccount
+	priorWebhook := plan.WebhookEnabled
 	flattenDID(got, &plan)
 	keepSMSAccountNone(&plan.SMSSIPAccount, priorSMS)
+	keepWebhookEnabled(&plan.WebhookEnabled, priorWebhook)
 	if err := r.keepOrFillPOPHostname(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -216,8 +218,10 @@ func (r *didResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 	priorSMS := state.SMSSIPAccount
+	priorWebhook := state.WebhookEnabled
 	flattenDID(got, &state)
 	keepSMSAccountNone(&state.SMSSIPAccount, priorSMS)
+	keepWebhookEnabled(&state.WebhookEnabled, priorWebhook)
 	if err := r.keepOrFillPOPHostname(ctx, &state); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -245,8 +249,10 @@ func (r *didResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		return
 	}
 	priorSMS := plan.SMSSIPAccount
+	priorWebhook := plan.WebhookEnabled
 	flattenDID(got, &plan)
 	keepSMSAccountNone(&plan.SMSSIPAccount, priorSMS)
+	keepWebhookEnabled(&plan.WebhookEnabled, priorWebhook)
 	if err := r.keepOrFillPOPHostname(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Unable to resolve DID POP hostname", err.Error())
 		return
@@ -292,6 +298,23 @@ func (r *didResource) applyDID(ctx context.Context, plan *didModel) error {
 	}
 	sms := overlayParams(current.SetSMSParams(), didSMSParams(*plan))
 	sms["did"] = plan.DID.ValueString()
+	if err := r.client.SetSMS(ctx, sms); err != nil {
+		return err
+	}
+	return r.restoreWebhookIfCleared(ctx, plan, sms)
+}
+
+func (r *didResource) restoreWebhookIfCleared(ctx context.Context, plan *didModel, sms map[string]string) error {
+	if plan.WebhookEnabled.IsNull() || plan.WebhookEnabled.IsUnknown() || !plan.WebhookEnabled.ValueBool() {
+		return nil
+	}
+	got, err := r.client.GetDID(ctx, plan.DID.ValueString())
+	if err != nil {
+		return err
+	}
+	if got.WebhookEnabled.Bool() {
+		return nil
+	}
 	return r.client.SetSMS(ctx, sms)
 }
 
@@ -532,7 +555,12 @@ func didSMSParams(m didModel) map[string]string {
 	setBool01(params, "url_callback_enable", m.SMSURLCallbackEnabled)
 	setString(params, "url_callback", m.SMSURLCallback)
 	setBool01(params, "url_callback_retry", m.SMSURLCallbackRetry)
-	setString(params, "sms_sipaccount", m.SMSSIPAccount)
+	// VoIP.ms setSMS rejects "0" (invalid_account). None is empty.
+	if smsAccountNone(m.SMSSIPAccount) {
+		params["sms_sipaccount"] = ""
+	} else {
+		setString(params, "sms_sipaccount", m.SMSSIPAccount)
+	}
 	setBool01(params, "sms_sipaccount_enabled", m.SMSSIPAccountEnabled)
 	setString(params, "webhook", m.Webhook)
 	setBool01(params, "webhook_enabled", m.WebhookEnabled)

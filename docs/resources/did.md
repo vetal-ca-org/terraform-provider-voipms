@@ -73,7 +73,7 @@ resource "voipms_did" "home" {
 - `sms_enabled` (Boolean) Enable SMS/MMS on the DID (`setSMS`).
 - `sms_forward` (String) Phone number to forward SMS to.
 - `sms_forward_enabled` (Boolean) Forward inbound SMS to `sms_forward`.
-- `sms_sipaccount` (String) Sub-account used to send SMS via SIP. `0` and empty both mean none (VoIP.ms returns empty on iNUM).
+- `sms_sipaccount` (String) Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0` with `invalid_account`). VoIP.ms returns empty on iNUM.
 - `sms_sipaccount_enabled` (Boolean) Enable SIP-account SMS sending.
 - `sms_url_callback` (String) Legacy SMS URL callback (supports `{TO}`, `{FROM}`, `{MESSAGE}`).
 - `sms_url_callback_enabled` (Boolean) Enable the legacy URL callback.
@@ -82,7 +82,7 @@ resource "voipms_did" "home" {
 - `voicemail_name` (String) Voicemail display name. Prefer `voicemail = voipms_voicemail.this.id` so the mailbox is a resource or data source. Resolved to `voicemail` when applying if set.
 - `voicemail_threshold` (Number) Voicemail threshold.
 - `webhook` (String) Modern SMS webhook URL.
-- `webhook_enabled` (Boolean) Enable the modern SMS webhook.
+- `webhook_enabled` (Boolean) Enable the modern SMS webhook. `setDIDInfo` clears it; the provider writes `setSMS` again and keeps planned `true` if read-back is still false.
 
 ### Read-Only
 
