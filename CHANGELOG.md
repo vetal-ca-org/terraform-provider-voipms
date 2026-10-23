@@ -2,6 +2,15 @@
 
 All notable changes to this provider will be documented in this file.
 
+## 0.3.3 - 2026-10-23
+
+### Fixed
+
+- `voipms_did.webhook_enabled`: `setSMS` writes `webhook_enable`. `getDIDsInfo` returns `webhook_enabled`; sending the read name stored the URL and left the tick off.
+- Skip `setDIDInfo` when routing is unchanged. That call clears the webhook tick.
+- `setSMS` is serialized and retried on account-wide `sms_wait_message`.
+- Apply fails if `getDIDsInfo` still reads false after those writes. State no longer keeps a planned true over a false read-back.
+
 ## 0.3.2 - 2026-10-23
 
 ### Fixed

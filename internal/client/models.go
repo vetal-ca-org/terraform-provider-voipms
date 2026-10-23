@@ -172,7 +172,7 @@ func (d DID) SetSMSParams() map[string]string {
 		"sms_sipaccount":         d.SMSSIPAccount.String(),
 		"sms_sipaccount_enabled": d.SMSSIPAccountEnabled.String(),
 		"webhook":                d.Webhook.String(),
-		"webhook_enabled":        d.WebhookEnabled.String(),
+		"webhook_enable":         d.WebhookEnabled.String(),
 	}
 }
 

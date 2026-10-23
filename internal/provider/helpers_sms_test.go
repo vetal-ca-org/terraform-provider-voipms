@@ -53,29 +53,18 @@ func TestKeepSMSAccountNone(t *testing.T) {
 	}
 }
 
-func TestKeepWebhookEnabled(t *testing.T) {
-	got := types.BoolValue(false)
-	keepWebhookEnabled(&got, types.BoolValue(true))
-	if !got.ValueBool() {
-		t.Fatal("keep planned true over API false")
+func TestParamsEqual(t *testing.T) {
+	a := map[string]string{"did": "5550001001", "webhook_enabled": "1"}
+	b := map[string]string{"did": "5550001001", "webhook_enabled": "1"}
+	if !paramsEqual(a, b) {
+		t.Fatal("equal maps")
 	}
-
-	got = types.BoolValue(true)
-	keepWebhookEnabled(&got, types.BoolValue(true))
-	if !got.ValueBool() {
-		t.Fatal("keep true when API is true")
+	b["webhook_enabled"] = "0"
+	if paramsEqual(a, b) {
+		t.Fatal("different value")
 	}
-
-	got = types.BoolValue(false)
-	keepWebhookEnabled(&got, types.BoolValue(false))
-	if got.ValueBool() {
-		t.Fatal("must not invent true")
-	}
-
-	got = types.BoolValue(true)
-	keepWebhookEnabled(&got, types.BoolValue(false))
-	if !got.ValueBool() {
-		t.Fatal("must not hide API true")
+	if paramsEqual(a, map[string]string{"did": "5550001001"}) {
+		t.Fatal("different length")
 	}
 }
 
@@ -89,5 +78,15 @@ func TestDidSMSParamsNoneAccount(t *testing.T) {
 	got := didSMSParams(didModel{SMSSIPAccount: types.StringValue("100001")})
 	if got["sms_sipaccount"] != "100001" {
 		t.Fatalf("account: sms_sipaccount=%q, want 100001", got["sms_sipaccount"])
+	}
+}
+
+func TestDidSMSParamsWebhookEnable(t *testing.T) {
+	got := didSMSParams(didModel{WebhookEnabled: types.BoolValue(true)})
+	if got["webhook_enable"] != "1" {
+		t.Fatalf("webhook_enable=%q, want 1", got["webhook_enable"])
+	}
+	if _, ok := got["webhook_enabled"]; ok {
+		t.Fatal("setSMS uses webhook_enable, not webhook_enabled")
 	}
 }

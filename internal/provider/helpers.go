@@ -98,16 +98,16 @@ func keepSMSAccountNone(got *types.String, prior types.String) {
 	}
 }
 
-// setDIDInfo clears the modern webhook. setSMS writes webhook_enabled
-// again, but getDIDsInfo often still returns false. Keep the value we
-// sent so apply does not fail inconsistent result.
-func keepWebhookEnabled(got *types.Bool, prior types.Bool) {
-	if got.IsNull() || got.IsUnknown() || prior.IsNull() || prior.IsUnknown() {
-		return
+func paramsEqual(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
 	}
-	if prior.ValueBool() && !got.ValueBool() {
-		*got = prior
+	for k, v := range a {
+		if b[k] != v {
+			return false
+		}
 	}
+	return true
 }
 
 func setBool01(params map[string]string, key string, v types.Bool) {
