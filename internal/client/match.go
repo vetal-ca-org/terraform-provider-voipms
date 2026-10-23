@@ -56,7 +56,7 @@ func MatchVoicemail(items []Voicemail, query string) (*Voicemail, error) {
 	})
 }
 
-// MatchForwarding finds a forwarding by id, description, or description slug (`kate-fizz-cell`).
+// MatchForwarding finds a forwarding by id, description, or description slug (`office-front-desk`).
 func MatchForwarding(items []Forwarding, query string) (*Forwarding, error) {
 	return matchUnique(items, query, "forwarding", func(f *Forwarding) []string {
 		return keysWithSlug(f.Forwarding.String(), f.Description.String())

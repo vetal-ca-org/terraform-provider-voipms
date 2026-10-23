@@ -5,7 +5,7 @@ import (
 	"unicode"
 )
 
-// Slug is a lowercase hyphenated form of s ("Kate Fizz Cell" → "kate-fizz-cell").
+// Slug is a lowercase hyphenated form of s ("Office Front Desk" -> "office-front-desk").
 func Slug(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {
