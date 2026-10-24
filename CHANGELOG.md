@@ -2,6 +2,12 @@
 
 All notable changes to this provider will be documented in this file.
 
+## 0.3.4 - 2026-10-24
+
+### Fixed
+
+- `voipms_did.sms_sipaccount`: after unlink, `getDIDsInfo` returns the bare main account (digits, no underscore) instead of empty. When config is none, that leftover is treated as none so apply does not fail inconsistent result. Explicit `sms_sipaccount = "<account>"` still round-trips.
+
 ## 0.3.3 - 2026-10-23
 
 ### Fixed

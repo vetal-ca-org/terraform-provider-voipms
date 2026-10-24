@@ -73,7 +73,7 @@ resource "voipms_did" "home" {
 - `sms_enabled` (Boolean) Enable SMS/MMS on the DID (`setSMS`).
 - `sms_forward` (String) Phone number to forward SMS to.
 - `sms_forward_enabled` (Boolean) Forward inbound SMS to `sms_forward`.
-- `sms_sipaccount` (String) Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0`).
+- `sms_sipaccount` (String) Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0`). After unlink, `getDIDsInfo` may return the bare main account (digits, no underscore); that leftover is none when config is none.
 - `sms_sipaccount_enabled` (Boolean) Enable SIP-account SMS sending.
 - `sms_url_callback` (String) Legacy SMS URL callback (supports `{TO}`, `{FROM}`, `{MESSAGE}`).
 - `sms_url_callback_enabled` (Boolean) Enable the legacy URL callback.

@@ -81,9 +81,10 @@ func keepNamed(plan *types.String, state types.String, code client.NamedCode) {
 	}
 }
 
-// VoIP.ms stores "no SIP SMS account" as "". Config "0" is the same on read.
+// VoIP.ms stores "no SIP SMS account" as "". Config "0" is the same on write.
 // setSMS rejects "0" (invalid_account) on SMS-capable NANP DIDs; writes send "".
-// iNUM has no SMS; getDIDsInfo always returns "".
+// After unlink, getDIDsInfo often returns the bare main account (digits, no
+// underscore) instead of empty. iNUM has no SMS; getDIDsInfo always returns "".
 func smsAccountNone(v types.String) bool {
 	if v.IsNull() || v.IsUnknown() {
 		return true
@@ -92,8 +93,30 @@ func smsAccountNone(v types.String) bool {
 	return s == "" || s == "0"
 }
 
+// leftoverSMSAccountNone is the portal leftover after unlink: a digit-only
+// main account, not {account}_{username}. Used only on read-back. Write still
+// sends a configured bare account as-is.
+func leftoverSMSAccountNone(v types.String) bool {
+	if v.IsNull() || v.IsUnknown() {
+		return false
+	}
+	s := strings.TrimSpace(v.ValueString())
+	if s == "" || s == "0" || strings.Contains(s, "_") {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func keepSMSAccountNone(got *types.String, prior types.String) {
-	if smsAccountNone(*got) && smsAccountNone(prior) {
+	if !smsAccountNone(prior) {
+		return
+	}
+	if smsAccountNone(*got) || leftoverSMSAccountNone(*got) {
 		*got = prior
 	}
 }

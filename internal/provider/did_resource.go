@@ -136,7 +136,7 @@ func didResourceAttributes() map[string]schema.Attribute {
 		"webhook":                  optStr("Modern SMS webhook URL."),
 		"webhook_enabled":          optBoolAttr("Enable the modern SMS webhook. `setDIDInfo` clears the tick; the provider skips that call when routing is unchanged and retries `setSMS` until `getDIDsInfo` reads true. `setSMS` writes `webhook_enable`."),
 		"dialmode":                 schema.StringAttribute{MarkdownDescription: "SMS dialing mode.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0`)."),
+		"sms_sipaccount":           optStr("Sub-account used to send SMS via SIP. `0` and empty both mean none. Writes send empty (`setSMS` rejects `0`). After unlink, `getDIDsInfo` may return the bare main account (digits, no underscore); that leftover is none when config is none."),
 		"sms_sipaccount_enabled":   optBoolAttr("Enable SIP-account SMS sending."),
 	}
 }
